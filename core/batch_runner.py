@@ -1,30 +1,90 @@
 ﻿# -*- coding: utf-8 -*-
 """
 22-Scenario Grid Impact Assessment Batch Execution Engine.
-Orchestrates Load Flow, Short Circuit, and Dynamic RMS simulations with explicit diagnostic failure tracking.
+Orchestrates Load Flow, Short Circuit, and Dynamic RMS simulations with dynamic result persistence.
 """
 
 import os
+import json
 import logging
-import numpy as np
+import datetime
 from typing import Dict, Any, List, Optional, Callable
 
-from core.steady_state import SteadyStateEngine, safe_get_attr
+from core.steady_state import SteadyStateEngine
 from core.dynamic_sim import DynamicSimEngine
 from core.grid_code_rules import GridCodeChecker
 
 logger = logging.getLogger("BatchRunner")
 
 class GridImpactBatchRunner:
-    """Executes the full 22-Scenario Assessment Suite in DIgSILENT PowerFactory."""
+    """Executes the full 22-Scenario Assessment Suite with JSON history persistence."""
 
     def __init__(self, connector):
         self.connector = connector
         self.steady_engine = SteadyStateEngine(connector)
         self.dynamic_engine = DynamicSimEngine(connector)
+        self.history_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "results_history")
+        os.makedirs(self.history_dir, exist_ok=True)
 
     def auto_detect_targets(self) -> Dict[str, str]:
         return self.connector.auto_detect_5_targets()
+
+    def save_results_to_history(self, batch_results: Dict[str, Any]) -> str:
+        """Saves batch results dictionary to local JSON history database."""
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        proj_clean = "".join(c for c in batch_results.get("project_name", "Grid_Project") if c.isalnum() or c in ("_", "-"))
+        filename = f"Assessment_{proj_clean}_{timestamp}.json"
+        filepath = os.path.join(self.history_dir, filename)
+
+        save_payload = {
+            "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "filename": filename,
+            "filepath": filepath,
+            **batch_results
+        }
+
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(save_payload, f, indent=2)
+
+        logger.info(f"Saved assessment results to local history: {filepath}")
+        return filepath
+
+    def get_saved_history_list(self) -> List[Dict[str, str]]:
+        """Returns list of saved historical runs sorted by timestamp (newest first)."""
+        if not os.path.exists(self.history_dir):
+            return []
+
+        history_files = []
+        for fn in os.listdir(self.history_dir):
+            if fn.endswith(".json"):
+                fp = os.path.join(self.history_dir, fn)
+                try:
+                    with open(fp, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    history_files.append({
+                        "filename": fn,
+                        "filepath": fp,
+                        "project_name": data.get("project_name", "Project"),
+                        "timestamp": data.get("timestamp", "Unknown Date"),
+                        "passed_count": data.get("passed_count", 0),
+                        "total_count": data.get("total_count", 22),
+                        "label": f"{data.get('timestamp', '')} - {data.get('project_name', 'Project')} ({data.get('passed_count', 0)}/{data.get('total_count', 22)} PASSED)"
+                    })
+                except Exception as e:
+                    logger.debug(f"Error reading history file {fn}: {e}")
+
+        history_files.sort(key=lambda x: x["filename"], reverse=True)
+        return history_files
+
+    def load_results_from_history(self, filepath: str) -> Dict[str, Any]:
+        """Loads a saved assessment result dictionary from a local JSON history file."""
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"History file not found: {filepath}")
+
+        with open(filepath, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        return data
 
     def run_all_22_scenarios(
         self,
@@ -127,7 +187,7 @@ class GridImpactBatchRunner:
                 "details": f"Freq Nadir: {res.get('freq_nadir_hz', 49.20):.2f} Hz, Clearing: 120ms"
             })
 
-        return {
+        batch_results = {
             "project_name": self.connector.active_project_name or "Active Grid Project",
             "mapping": mapping,
             "total_count": len(results_db),
@@ -135,3 +195,8 @@ class GridImpactBatchRunner:
             "failed_count": sum(1 for r in results_db if r["status"] != "COMPLIANT"),
             "scenarios": results_db
         }
+
+        # Auto-save to local JSON history database
+        self.save_results_to_history(batch_results)
+
+        return batch_results
