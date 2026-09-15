@@ -477,11 +477,19 @@ class DashboardPage(QScrollArea):
                 ax.set_facecolor(card_bg)
                 ax.tick_params(colors=txt_col, labelsize=7)
 
-            # Calculate dynamic run seed factor from dataset metadata to ensure distinct chart values per run
-            seed_str = str(batch_res.get("timestamp", "")) + str(batch_res.get("project_name", "")) + str(batch_res.get("filepath", ""))
-            run_seed = (sum(ord(c) for c in seed_str) % 100) / 100.0 if seed_str else 0.5
+            # Extract dynamic simulation results directly from loaded scenarios_db
+            lf_scen = next((sc for sc in self.scenarios_db if sc.get("category") == "Load Flow"), {})
+            lf_voltages = lf_scen.get("bus_voltages_pu", {})
+            lf_loadings = lf_scen.get("line_loadings_pct", {})
+            lf_generators = lf_scen.get("generators", {})
+            lf_load_factor = lf_scen.get("load_factor", 1.0)
 
-            v_vals = [1.012 + 0.015*run_seed + 0.008*(i%3) - 0.005*(i%2) for i in range(n_buses)]
+            # Bus Voltage Profile Chart
+            if lf_voltages:
+                v_vals = [float(lf_voltages.get(b, 1.012 + 0.005*(i%3))) for i, b in enumerate(buses)]
+            else:
+                v_vals = [(1.012 + 0.008*(i%3) - 0.005*(i%2)) * (0.98 + 0.04*lf_load_factor) for i in range(n_buses)]
+
             ax_v.bar(x_b, v_vals, width=0.4, color="#38A169", label="Voltage (p.u.)")
             ax_v.set_xticks(x_b)
             ax_v.set_xticklabels(buses, rotation=20, color=txt_col, fontsize=7)
@@ -489,8 +497,8 @@ class DashboardPage(QScrollArea):
             ax_v.axhline(0.90, color="orange", linestyle="--")
             ax_v.axhline(1.05, color="orange", linestyle="--")
 
-            p_bus = [(45.0 + 15.0*(i%4)) * (0.9 + 0.2 * run_seed) for i in range(n_buses)]
-            q_bus = [(15.0 + 5.0*(i%3)) * (0.9 + 0.2 * run_seed) for i in range(n_buses)]
+            p_bus = [(45.0 + 15.0*(i%4)) * lf_load_factor for i in range(n_buses)]
+            q_bus = [(15.0 + 5.0*(i%3)) * lf_load_factor for i in range(n_buses)]
             ax_pq.bar(x_b - 0.15, p_bus, 0.3, label="P (MW)", color="#3182CE")
             ax_pq.bar(x_b + 0.15, q_bus, 0.3, label="Q (MVAR)", color="#DD6B20")
             ax_pq.set_xticks(x_b)
@@ -498,15 +506,26 @@ class DashboardPage(QScrollArea):
             ax_pq.set_title("HV Bus Active & Reactive Power (P & Q)", color=txt_col, fontsize=9, fontweight="bold")
             ax_pq.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=6)
 
-            loadings = [(58.0 + 7.0*(i%5)) * (0.85 + 0.3 * run_seed) for i in range(n_lines)]
+            # Transmission Line Loadings Chart
+            if lf_loadings:
+                loadings = [float(lf_loadings.get(l, 58.0 + 7.0*(i%5))) for i, l in enumerate(lines)]
+            else:
+                loadings = [(58.0 + 7.0*(i%5)) * lf_load_factor for i in range(n_lines)]
+
             ax_l.bar(x_l, loadings, width=0.4, color="#805AD5", label="Line Loading (%)")
             ax_l.set_xticks(x_l)
             ax_l.set_xticklabels(lines, rotation=20, color=txt_col, fontsize=7)
             ax_l.set_title("Transmission Line Loading (≥100 kV Corridors)", color=txt_col, fontsize=9, fontweight="bold")
             ax_l.axhline(100.0, color="red", linestyle="--")
 
-            p_gen = [(30.0 + 40.0*(i%4)) * (0.9 + 0.2 * run_seed) for i in range(n_gens)]
-            q_gen = [(10.0 + 12.0*(i%3)) * (0.9 + 0.2 * run_seed) for i in range(n_gens)]
+            # Utility Generator Output Chart
+            if lf_generators:
+                p_gen = [float(lf_generators.get(g, {}).get("p_mw", 30.0 + 40.0*(i%4))) for i, g in enumerate(gens)]
+                q_gen = [float(lf_generators.get(g, {}).get("q_mvar", 10.0 + 12.0*(i%3))) for i, g in enumerate(gens)]
+            else:
+                p_gen = [(30.0 + 40.0*(i%4)) * lf_load_factor for i in range(n_gens)]
+                q_gen = [(10.0 + 12.0*(i%3)) * lf_load_factor for i in range(n_gens)]
+
             ax_g.bar(x_g - 0.15, p_gen, 0.3, label="P (MW)", color="#38A169")
             ax_g.bar(x_g + 0.15, q_gen, 0.3, label="Q (MVAR)", color="#D69E2E")
             ax_g.set_xticks(x_g)
@@ -540,18 +559,23 @@ class DashboardPage(QScrollArea):
             scr_val = []
             sc_scenarios = [sc for sc in self.scenarios_db if sc.get("category") == "Short Circuit"]
             for sc_item in sc_scenarios:
-                details = sc_item.get("details", "")
-                sk_m = re.search(r"S\\?\"?k:\s*([0-9.]+)", details)
-                ik_m = re.search(r"I\\?\"?k:\s*([0-9.]+)", details)
-                scr_m = re.search(r"SCR:\s*([0-9.]+)", details)
-                if sk_m: sk_mva.append(float(sk_m.group(1)))
-                if ik_m: ik_ka.append(float(ik_m.group(1)))
-                if scr_m: scr_val.append(float(scr_m.group(1)))
+                if "short_circuit_power_mva" in sc_item:
+                    sk_mva.append(float(sc_item["short_circuit_power_mva"]))
+                    ik_ka.append(float(sc_item.get("short_circuit_current_ka", 3.27)))
+                    scr_val.append(float(sc_item.get("scpr_ratio", 3.40)))
+                else:
+                    details = sc_item.get("details", "")
+                    sk_m = re.search(r"S\\?\"?k:\s*([0-9.]+)", details)
+                    ik_m = re.search(r"I\\?\"?k:\s*([0-9.]+)", details)
+                    scr_m = re.search(r"SCR:\s*([0-9.]+)", details)
+                    if sk_m: sk_mva.append(float(sk_m.group(1)))
+                    if ik_m: ik_ka.append(float(ik_m.group(1)))
+                    if scr_m: scr_val.append(float(scr_m.group(1)))
 
             if len(sk_mva) < 4:
-                sk_mva = [1150.4 * (0.9 + 0.2*run_seed), 1080.2 * (0.9 + 0.2*run_seed), 850.5 * (0.9 + 0.2*run_seed), 790.0 * (0.9 + 0.2*run_seed)]
-                ik_ka = [4.43 * (0.9 + 0.2*run_seed), 4.15 * (0.9 + 0.2*run_seed), 3.27 * (0.9 + 0.2*run_seed), 3.04 * (0.9 + 0.2*run_seed)]
-                scr_val = [4.60 * (0.9 + 0.2*run_seed), 4.32 * (0.9 + 0.2*run_seed), 3.40 * (0.9 + 0.2*run_seed), 3.16 * (0.9 + 0.2*run_seed)]
+                sk_mva = [1150.4, 1080.2, 850.5, 790.0]
+                ik_ka = [4.43, 4.15, 3.27, 3.04]
+                scr_val = [4.60, 4.32, 3.40, 3.16]
 
             ax_sk.bar(x_sc, sk_mva, width=0.4, color="#3182CE")
             ax_sk.set_xticks(x_sc)
@@ -591,27 +615,40 @@ class DashboardPage(QScrollArea):
             m1 = (t >= 1.0) & (t <= 1.15)
             r1 = (t > 1.15) & (t <= 3.5)
 
-            # Modulate dynamic transient nadir by run_seed
-            df_scale = 0.7 + 0.6 * run_seed
+            dyn_scenarios = [sc for sc in self.scenarios_db if sc.get("category") == "Dynamic RMS"]
+            smr_trip_sc = next((sc for sc in dyn_scenarios if sc.get("event_type") == "SMR Trip"), {})
+            gen_trip_sc = next((sc for sc in dyn_scenarios if sc.get("event_type") == "Gen Trip"), {})
+            load_trip_sc = next((sc for sc in dyn_scenarios if sc.get("event_type") == "Load Trip"), {})
+            line_trip_sc = next((sc for sc in dyn_scenarios if sc.get("event_type") == "Line Trip"), {})
+
+            nadir_smr = float(smr_trip_sc.get("freq_nadir_hz", 49.15))
+            nadir_gen = float(gen_trip_sc.get("freq_nadir_hz", 49.35))
+            nadir_load = float(load_trip_sc.get("freq_nadir_hz", 50.55))
+            nadir_line = float(line_trip_sc.get("freq_nadir_hz", 49.60))
+
+            drop_smr = 50.0 - nadir_smr
+            drop_gen = 50.0 - nadir_gen
+            diff_load = nadir_load - 50.0
+            drop_line = 50.0 - nadir_line
 
             f_smr = np.ones_like(t) * 50.0
-            f_smr[m1] = 50.0 - 0.85 * df_scale * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
-            f_smr[r1] = (50.0 - 0.85 * df_scale) + 0.85 * df_scale * (1.0 - np.exp(-2.2 * (t[r1] - 1.15)))
+            f_smr[m1] = 50.0 - drop_smr * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
+            f_smr[r1] = nadir_smr + drop_smr * (1.0 - np.exp(-2.2 * (t[r1] - 1.15)))
 
             v_smr = np.ones_like(t) * 1.0
             v_smr[m1] = 0.15 + 0.05 * np.random.rand(np.sum(m1))
             v_smr[r1] = 0.85 + 0.14 * (1.0 - np.exp(-3.0 * (t[r1] - 1.15)))
 
-            p_smr = np.ones_like(t) * (140.0 + 20.0 * run_seed)
-            p_smr[t >= 1.0] = (140.0 + 20.0 * run_seed) * np.exp(-1.5 * (t[t >= 1.0] - 1.0))
+            p_smr = np.ones_like(t) * 150.0
+            p_smr[t >= 1.0] = 150.0 * np.exp(-1.5 * (t[t >= 1.0] - 1.0))
 
             q_smr = np.ones_like(t) * 45.0
             q_smr[m1] = 45.0 + 35.0 * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
             q_smr[r1] = 45.0 + 15.0 * (1.0 - np.exp(-2.0 * (t[r1] - 1.15)))
 
             f_gen = np.ones_like(t) * 50.0
-            f_gen[m1] = 50.0 - 0.65 * df_scale * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
-            f_gen[r1] = (50.0 - 0.65 * df_scale) + 0.65 * df_scale * (1.0 - np.exp(-2.5 * (t[r1] - 1.15)))
+            f_gen[m1] = 50.0 - drop_gen * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
+            f_gen[r1] = nadir_gen + drop_gen * (1.0 - np.exp(-2.5 * (t[r1] - 1.15)))
 
             v_gen = np.ones_like(t) * 1.0
             v_gen[m1] = 0.45 + 0.05 * np.random.rand(np.sum(m1))
@@ -625,8 +662,8 @@ class DashboardPage(QScrollArea):
             q_gen[r1] = 15.0 + 5.0 * (1.0 - np.exp(-2.0 * (t[r1] - 1.15)))
 
             f_load = np.ones_like(t) * 50.0
-            f_load[m1] = 50.0 + 0.55 * df_scale * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
-            f_load[r1] = (50.0 + 0.55 * df_scale) - 0.55 * df_scale * (1.0 - np.exp(-2.0 * (t[r1] - 1.15)))
+            f_load[m1] = 50.0 + diff_load * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
+            f_load[r1] = nadir_load - diff_load * (1.0 - np.exp(-2.0 * (t[r1] - 1.15)))
 
             v_load = np.ones_like(t) * 1.0
             v_load[m1] = 1.0 + 0.04 * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
@@ -640,8 +677,8 @@ class DashboardPage(QScrollArea):
             q_load[r1] = 7.0 + 10.0 * (1.0 - np.exp(-2.0 * (t[r1] - 1.15)))
 
             f_line = np.ones_like(t) * 50.0
-            f_line[m1] = 50.0 - 0.40 * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
-            f_line[r1] = 49.60 + 0.40 * (1.0 - np.exp(-3.0 * (t[r1] - 1.15)))
+            f_line[m1] = 50.0 - drop_line * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
+            f_line[r1] = nadir_line + drop_line * (1.0 - np.exp(-3.0 * (t[r1] - 1.15)))
 
             v_line = np.ones_like(t) * 1.0
             v_line[m1] = 0.65 + 0.05 * np.random.rand(np.sum(m1))
