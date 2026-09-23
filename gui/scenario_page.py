@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
                              QFrame, QComboBox, QDoubleSpinBox, QMessageBox, QScrollArea, QProgressBar)
 from PySide6.QtCore import Qt
@@ -263,6 +263,10 @@ class ScenarioPage(QScrollArea):
         results = self.batch_runner.run_all_22_scenarios(mapping, low_ratio, update_progress)
         self.latest_batch_results = results
 
+        main_win = self.window()
+        if hasattr(main_win, "dashboard_page"):
+            main_win.dashboard_page.set_batch_results(results)
+
         QMessageBox.information(
             self, 
             "Batch Assessment Complete", 
@@ -281,7 +285,7 @@ class ScenarioPage(QScrollArea):
         cards = [self.card_mapper, self.card_load, self.card_run]
         titles = [self.title_mapper, self.title_load]
         sublabels = [self.lbl_smr, self.lbl_non_smr, self.lbl_big_load, self.lbl_crit_line, self.lbl_scen_title, self.lbl_low_ratio]
-        inputs = [self.combo_smr, self.combo_non_smr, self.combo_big_load, self.combo_crit_line, self.spin_low_ratio]
+        combos = [self.combo_smr, self.combo_non_smr, self.combo_big_load, self.combo_crit_line]
 
         if self.is_dark:
             self.setStyleSheet("QScrollArea { border: none; background-color: #0B0F19; }")
@@ -295,8 +299,17 @@ class ScenarioPage(QScrollArea):
                 t.setStyleSheet("color: #38BDF8;")
             for s in sublabels:
                 s.setStyleSheet("color: #F8FAFC; font-weight: bold; font-size: 11px;")
-            for i in inputs:
-                i.setStyleSheet("background-color: #0F172A; color: #F8FAFC; border: 1px solid #475569; border-radius: 6px; padding: 6px 12px;")
+
+            combo_style = (
+                "QComboBox { background-color: #0F172A; color: #F8FAFC; border: 1px solid #475569; border-radius: 6px; padding: 6px 12px; }"
+                "QComboBox QAbstractItemView { background-color: #0F172A; color: #F8FAFC; selection-background-color: #0284C7; selection-color: #FFFFFF; border: 1px solid #334155; border-radius: 6px; outline: 0px; padding: 4px; }"
+                "QComboBox QAbstractItemView::item { min-height: 26px; padding: 4px 8px; color: #F8FAFC; background-color: #0F172A; }"
+                "QComboBox QAbstractItemView::item:selected { background-color: #0284C7; color: #FFFFFF; }"
+                "QComboBox QAbstractItemView::item:hover { background-color: #1E293B; color: #F8FAFC; }"
+            )
+            for cb in combos:
+                cb.setStyleSheet(combo_style)
+            self.spin_low_ratio.setStyleSheet("background-color: #0F172A; color: #F8FAFC; border: 1px solid #475569; border-radius: 6px; padding: 6px 12px;")
 
             self.btn_run_22.setStyleSheet("background-color: #0284C7; color: white; border: none; border-radius: 6px; padding: 10px;")
             self.lbl_status_log.setStyleSheet("color: #94A3B8;")
@@ -312,8 +325,17 @@ class ScenarioPage(QScrollArea):
                 t.setStyleSheet("color: #0284C7;")
             for s in sublabels:
                 s.setStyleSheet("color: #0F172A; font-weight: bold; font-size: 11px;")
-            for i in inputs:
-                i.setStyleSheet("background-color: #F8FAFC; color: #0F172A; border: 1px solid #CBD5E1; border-radius: 6px; padding: 6px 12px;")
+
+            combo_style = (
+                "QComboBox { background-color: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1; border-radius: 6px; padding: 6px 12px; }"
+                "QComboBox QAbstractItemView { background-color: #FFFFFF; color: #0F172A; selection-background-color: #0284C7; selection-color: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 6px; outline: 0px; padding: 4px; }"
+                "QComboBox QAbstractItemView::item { min-height: 26px; padding: 4px 8px; color: #0F172A; background-color: #FFFFFF; }"
+                "QComboBox QAbstractItemView::item:selected { background-color: #0284C7; color: #FFFFFF; }"
+                "QComboBox QAbstractItemView::item:hover { background-color: #E2E8F0; color: #0F172A; }"
+            )
+            for cb in combos:
+                cb.setStyleSheet(combo_style)
+            self.spin_low_ratio.setStyleSheet("background-color: #F8FAFC; color: #0F172A; border: 1px solid #CBD5E1; border-radius: 6px; padding: 6px 12px;")
 
             self.btn_run_22.setStyleSheet("background-color: #0284C7; color: white; border: none; border-radius: 6px; padding: 10px;")
             self.lbl_status_log.setStyleSheet("color: #475569;")

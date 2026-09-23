@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import os
 from PySide6.QtWidgets import (QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, 
                              QPushButton, QStackedWidget, QLabel, QFrame, QSizePolicy, QApplication)
@@ -143,8 +143,8 @@ class MainWindow(QMainWindow):
 
         if index == 1:
             self.scenario_page.refresh_element_mapping()
-        elif index == 2 and not self.dashboard_page.is_data_loaded:
-            self.dashboard_page.load_analytics_data()
+        elif index == 2:
+            self.dashboard_page.on_page_shown()
 
     def toggle_theme(self):
         self.is_dark = not self.is_dark
@@ -189,6 +189,11 @@ class MainWindow(QMainWindow):
                     "QMessageBox QLabel { color: #F8FAFC; font-size: 11px; font-weight: 500; }"
                     "QMessageBox QPushButton { background-color: #0284C7; color: #FFFFFF; border: none; border-radius: 6px; padding: 8px 18px; font-weight: bold; min-width: 80px; }"
                     "QMessageBox QPushButton:hover { background-color: #0369A1; }"
+                    "QComboBox { background-color: #0F172A; color: #F8FAFC; border: 1px solid #475569; border-radius: 6px; padding: 4px 8px; }"
+                    "QComboBox QAbstractItemView { background-color: #0F172A; color: #F8FAFC; selection-background-color: #0284C7; selection-color: #FFFFFF; border: 1px solid #334155; border-radius: 6px; outline: 0px; padding: 4px; }"
+                    "QComboBox QAbstractItemView::item { min-height: 26px; padding: 4px 8px; color: #F8FAFC; background-color: #0F172A; }"
+                    "QComboBox QAbstractItemView::item:selected { background-color: #0284C7; color: #FFFFFF; }"
+                    "QComboBox QAbstractItemView::item:hover { background-color: #1E293B; color: #F8FAFC; }"
                 )
         else:
             self.sidebar.setStyleSheet(
@@ -205,4 +210,9 @@ class MainWindow(QMainWindow):
                     "QMessageBox QLabel { color: #0F172A; font-size: 11px; font-weight: 500; }"
                     "QMessageBox QPushButton { background-color: #0284C7; color: #FFFFFF; border: none; border-radius: 6px; padding: 8px 18px; font-weight: bold; min-width: 80px; }"
                     "QMessageBox QPushButton:hover { background-color: #0369A1; }"
+                    "QComboBox { background-color: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1; border-radius: 6px; padding: 4px 8px; }"
+                    "QComboBox QAbstractItemView { background-color: #FFFFFF; color: #0F172A; selection-background-color: #0284C7; selection-color: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 6px; outline: 0px; padding: 4px; }"
+                    "QComboBox QAbstractItemView::item { min-height: 26px; padding: 4px 8px; color: #0F172A; background-color: #FFFFFF; }"
+                    "QComboBox QAbstractItemView::item:selected { background-color: #0284C7; color: #FFFFFF; }"
+                    "QComboBox QAbstractItemView::item:hover { background-color: #E2E8F0; color: #0F172A; }"
                 )

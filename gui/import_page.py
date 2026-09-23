@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import os
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
                              QFileDialog, QFrame, QMessageBox, QLineEdit, QComboBox, QScrollArea)
@@ -244,7 +244,13 @@ class ImportPage(QScrollArea):
 
             self.txt_api_path.setStyleSheet("background-color: #0F172A; color: #F8FAFC; border: 1px solid #475569; border-radius: 6px; padding: 6px 12px;")
             self.txt_pfd_path.setStyleSheet("background-color: #0F172A; color: #F8FAFC; border: 1px solid #475569; border-radius: 6px; padding: 6px 12px;")
-            self.combo_projects.setStyleSheet("background-color: #0F172A; color: #F8FAFC; border: 1px solid #475569; border-radius: 6px; padding: 6px 12px;")
+            self.combo_projects.setStyleSheet(
+                "QComboBox { background-color: #0F172A; color: #F8FAFC; border: 1px solid #475569; border-radius: 6px; padding: 6px 12px; }"
+                "QComboBox QAbstractItemView { background-color: #0F172A; color: #F8FAFC; selection-background-color: #0284C7; selection-color: #FFFFFF; border: 1px solid #334155; border-radius: 6px; outline: 0px; padding: 4px; }"
+                "QComboBox QAbstractItemView::item { min-height: 26px; padding: 4px 8px; color: #F8FAFC; background-color: #0F172A; }"
+                "QComboBox QAbstractItemView::item:selected { background-color: #0284C7; color: #FFFFFF; }"
+                "QComboBox QAbstractItemView::item:hover { background-color: #1E293B; color: #F8FAFC; }"
+            )
 
             self.lbl_status.setStyleSheet("color: #38BDF8; font-weight: bold;")
             self.lbl_buses.setStyleSheet("color: #F8FAFC;")
@@ -270,7 +276,13 @@ class ImportPage(QScrollArea):
 
             self.txt_api_path.setStyleSheet("background-color: #F8FAFC; color: #0F172A; border: 1px solid #CBD5E1; border-radius: 6px; padding: 6px 12px;")
             self.txt_pfd_path.setStyleSheet("background-color: #F8FAFC; color: #0F172A; border: 1px solid #CBD5E1; border-radius: 6px; padding: 6px 12px;")
-            self.combo_projects.setStyleSheet("background-color: #F8FAFC; color: #0F172A; border: 1px solid #CBD5E1; border-radius: 6px; padding: 6px 12px;")
+            self.combo_projects.setStyleSheet(
+                "QComboBox { background-color: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1; border-radius: 6px; padding: 6px 12px; }"
+                "QComboBox QAbstractItemView { background-color: #FFFFFF; color: #0F172A; selection-background-color: #0284C7; selection-color: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 6px; outline: 0px; padding: 4px; }"
+                "QComboBox QAbstractItemView::item { min-height: 26px; padding: 4px 8px; color: #0F172A; background-color: #FFFFFF; }"
+                "QComboBox QAbstractItemView::item:selected { background-color: #0284C7; color: #FFFFFF; }"
+                "QComboBox QAbstractItemView::item:hover { background-color: #E2E8F0; color: #0F172A; }"
+            )
 
             self.lbl_status.setStyleSheet("color: #0284C7; font-weight: bold;")
             self.lbl_buses.setStyleSheet("color: #0F172A;")

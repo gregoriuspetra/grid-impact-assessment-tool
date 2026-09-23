@@ -1,0 +1,473 @@
+{
+  "timestamp": "2026-09-21 14:42:43",
+  "filename": "Assessment_ActiveGridProject_20260921_144243.json",
+  "filepath": "C:\\Users\\LENOVO\\.gemini\\antigravity\\scratch\\grid_impact_assessment_app\\results_history\\Assessment_ActiveGridProject_20260921_144243.json",
+  "project_name": "Active Grid Project",
+  "mapping": {
+    "smr_gen": "SMR Thorcon Unit 1",
+    "pcc_bus": "Air Anyir (150kV)",
+    "interconnection_line": "AirAnyir-Sungailiat 150kV",
+    "critical_line": "Pangkal-AirAnyir 150kV",
+    "largest_non_smr_gen": "PLTD Air Anyir",
+    "biggest_load": "Air Anyir Substation Load"
+  },
+  "total_count": 22,
+  "passed_count": 22,
+  "failed_count": 0,
+  "scenarios": [
+    {
+      "code": "LF-01",
+      "category": "Load Flow",
+      "name": "Load Flow - With SMR (Peak Load)",
+      "with_smr": true,
+      "load_factor": 1.0,
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "bus_voltages_pu": {
+        "Pangkalpinang": 1.024,
+        "Sungailiat": 1.033,
+        "Air Anyir": 1.024,
+        "Kelapa": 1.024,
+        "Muntok": 1.018,
+        "Koba": 1.024,
+        "Toboali": 1.021
+      },
+      "line_loadings_pct": {
+        "Muntok-Kelapa": 49.8,
+        "Kelapa-Pangkalpinang": 71.5,
+        "Pangkalpinang-Air Anyir": 53.1,
+        "Air Anyir-Sungailiat": 43.9,
+        "Pangkalpinang-Koba": 57.3,
+        "Koba-Toboali": 49.8
+      },
+      "generators": {
+        "PLTD Merawang": {
+          "p_mw": 54.0,
+          "q_mvar": 10.0
+        },
+        "PLTD Air Anyir 1": {
+          "p_mw": 73.8,
+          "q_mvar": 27.0
+        },
+        "PLTD Air Anyir 2": {
+          "p_mw": 72.0,
+          "q_mvar": 20.0
+        },
+        "PLTG MPP Air Anyir 1": {
+          "p_mw": 79.2,
+          "q_mvar": 23.0
+        },
+        "SMR Thorcon Unit 1": {
+          "p_mw": 100.0,
+          "q_mvar": 20.0
+        }
+      },
+      "min_voltage_pu": 1.018,
+      "max_voltage_pu": 1.033,
+      "max_line_loading_pct": 71.5,
+      "total_loss_mw": 59.97,
+      "details": "Voltage Range: 1.018 - 1.033 p.u., Max Line Load: 71.5%"
+    },
+    {
+      "code": "LF-02",
+      "category": "Load Flow",
+      "name": "Load Flow - With SMR (Low Load)",
+      "with_smr": true,
+      "load_factor": 0.6,
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "bus_voltages_pu": {
+        "Pangkalpinang": 1.037,
+        "Sungailiat": 1.046,
+        "Air Anyir": 1.037,
+        "Kelapa": 1.037,
+        "Muntok": 1.031,
+        "Koba": 1.037,
+        "Toboali": 1.034
+      },
+      "line_loadings_pct": {
+        "Muntok-Kelapa": 29.9,
+        "Kelapa-Pangkalpinang": 42.9,
+        "Pangkalpinang-Air Anyir": 31.9,
+        "Air Anyir-Sungailiat": 26.3,
+        "Pangkalpinang-Koba": 34.4,
+        "Koba-Toboali": 29.9
+      },
+      "generators": {
+        "PLTD Merawang": {
+          "p_mw": 32.4,
+          "q_mvar": 6.0
+        },
+        "PLTD Air Anyir 1": {
+          "p_mw": 44.3,
+          "q_mvar": 16.2
+        },
+        "PLTD Air Anyir 2": {
+          "p_mw": 43.2,
+          "q_mvar": 12.0
+        },
+        "PLTG MPP Air Anyir 1": {
+          "p_mw": 47.5,
+          "q_mvar": 13.8
+        },
+        "SMR Thorcon Unit 1": {
+          "p_mw": 60.0,
+          "q_mvar": 12.0
+        }
+      },
+      "min_voltage_pu": 1.031,
+      "max_voltage_pu": 1.046,
+      "max_line_loading_pct": 42.9,
+      "total_loss_mw": 35.77,
+      "details": "Voltage Range: 1.031 - 1.046 p.u., Max Line Load: 42.9%"
+    },
+    {
+      "code": "LF-03",
+      "category": "Load Flow",
+      "name": "Load Flow - Without SMR (Peak Load)",
+      "with_smr": false,
+      "load_factor": 1.0,
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "bus_voltages_pu": {
+        "Pangkalpinang": 0.997,
+        "Sungailiat": 1.006,
+        "Air Anyir": 0.997,
+        "Kelapa": 0.997,
+        "Muntok": 0.991,
+        "Koba": 0.997,
+        "Toboali": 0.994
+      },
+      "line_loadings_pct": {
+        "Muntok-Kelapa": 65.0,
+        "Kelapa-Pangkalpinang": 93.4,
+        "Pangkalpinang-Air Anyir": 69.4,
+        "Air Anyir-Sungailiat": 57.4,
+        "Pangkalpinang-Koba": 74.9,
+        "Koba-Toboali": 65.0
+      },
+      "generators": {
+        "PLTD Merawang": {
+          "p_mw": 72.0,
+          "q_mvar": 10.0
+        },
+        "PLTD Air Anyir 1": {
+          "p_mw": 98.4,
+          "q_mvar": 27.0
+        },
+        "PLTD Air Anyir 2": {
+          "p_mw": 96.0,
+          "q_mvar": 20.0
+        },
+        "PLTG MPP Air Anyir 1": {
+          "p_mw": 105.6,
+          "q_mvar": 23.0
+        },
+        "SMR Thorcon Unit 1": {
+          "p_mw": 0.0,
+          "q_mvar": 0.0
+        }
+      },
+      "min_voltage_pu": 0.991,
+      "max_voltage_pu": 1.006,
+      "max_line_loading_pct": 93.4,
+      "total_loss_mw": 79.89,
+      "details": "Voltage Range: 0.991 - 1.006 p.u., Max Line Load: 93.4%"
+    },
+    {
+      "code": "LF-04",
+      "category": "Load Flow",
+      "name": "Load Flow - Without SMR (Low Load)",
+      "with_smr": false,
+      "load_factor": 0.6,
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "bus_voltages_pu": {
+        "Pangkalpinang": 1.01,
+        "Sungailiat": 1.019,
+        "Air Anyir": 1.01,
+        "Kelapa": 1.01,
+        "Muntok": 1.004,
+        "Koba": 1.01,
+        "Toboali": 1.007
+      },
+      "line_loadings_pct": {
+        "Muntok-Kelapa": 39.0,
+        "Kelapa-Pangkalpinang": 56.1,
+        "Pangkalpinang-Air Anyir": 41.6,
+        "Air Anyir-Sungailiat": 34.4,
+        "Pangkalpinang-Koba": 44.9,
+        "Koba-Toboali": 39.0
+      },
+      "generators": {
+        "PLTD Merawang": {
+          "p_mw": 43.2,
+          "q_mvar": 6.0
+        },
+        "PLTD Air Anyir 1": {
+          "p_mw": 59.0,
+          "q_mvar": 16.2
+        },
+        "PLTD Air Anyir 2": {
+          "p_mw": 57.6,
+          "q_mvar": 12.0
+        },
+        "PLTG MPP Air Anyir 1": {
+          "p_mw": 63.4,
+          "q_mvar": 13.8
+        },
+        "SMR Thorcon Unit 1": {
+          "p_mw": 0.0,
+          "q_mvar": 0.0
+        }
+      },
+      "min_voltage_pu": 1.004,
+      "max_voltage_pu": 1.019,
+      "max_line_loading_pct": 56.1,
+      "total_loss_mw": 47.61,
+      "details": "Voltage Range: 1.004 - 1.019 p.u., Max Line Load: 56.1%"
+    },
+    {
+      "code": "SC-01",
+      "category": "Short Circuit",
+      "name": "Short Circuit - With SMR (Peak Load)",
+      "with_smr": true,
+      "load_factor": 1.0,
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "short_circuit_power_mva": 1150.4,
+      "short_circuit_current_ka": 4.43,
+      "scpr_ratio": 4.6,
+      "details": "S\"k: 1150.4 MVA, I\"k: 4.43 kA, SCR: 4.60"
+    },
+    {
+      "code": "SC-02",
+      "category": "Short Circuit",
+      "name": "Short Circuit - With SMR (Low Load)",
+      "with_smr": true,
+      "load_factor": 0.6,
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "short_circuit_power_mva": 1081.4,
+      "short_circuit_current_ka": 4.16,
+      "scpr_ratio": 4.32,
+      "details": "S\"k: 1081.4 MVA, I\"k: 4.16 kA, SCR: 4.32"
+    },
+    {
+      "code": "SC-03",
+      "category": "Short Circuit",
+      "name": "Short Circuit - Without SMR (Peak Load)",
+      "with_smr": false,
+      "load_factor": 1.0,
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "short_circuit_power_mva": 850.5,
+      "short_circuit_current_ka": 3.27,
+      "scpr_ratio": 3.4,
+      "details": "S\"k: 850.5 MVA, I\"k: 3.27 kA, SCR: 3.40"
+    },
+    {
+      "code": "SC-04",
+      "category": "Short Circuit",
+      "name": "Short Circuit - Without SMR (Low Load)",
+      "with_smr": false,
+      "load_factor": 0.6,
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "short_circuit_power_mva": 799.5,
+      "short_circuit_current_ka": 3.07,
+      "scpr_ratio": 3.2,
+      "details": "S\"k: 799.5 MVA, I\"k: 3.07 kA, SCR: 3.20"
+    },
+    {
+      "code": "DYN-01",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of SMR (Peak Load)",
+      "with_smr": true,
+      "load_factor": 1.0,
+      "event_type": "SMR Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.2,
+      "details": "Freq Nadir: 49.20 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-02",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of SMR (Low Load)",
+      "with_smr": true,
+      "load_factor": 0.6,
+      "event_type": "SMR Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.2,
+      "details": "Freq Nadir: 49.20 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-03",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Biggest Load (Air Anyir Substation Load) - With SMR (Peak)",
+      "with_smr": true,
+      "load_factor": 1.0,
+      "event_type": "Load Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.2,
+      "details": "Freq Nadir: 49.20 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-04",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Biggest Load (Air Anyir Substation Load) - With SMR (Low)",
+      "with_smr": true,
+      "load_factor": 0.6,
+      "event_type": "Load Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.2,
+      "details": "Freq Nadir: 49.20 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-05",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Biggest Load (Air Anyir Substation Load) - Without SMR (Peak)",
+      "with_smr": false,
+      "load_factor": 1.0,
+      "event_type": "Load Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.2,
+      "details": "Freq Nadir: 49.20 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-06",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Biggest Load (Air Anyir Substation Load) - Without SMR (Low)",
+      "with_smr": false,
+      "load_factor": 0.6,
+      "event_type": "Load Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.2,
+      "details": "Freq Nadir: 49.20 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-07",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Transmission Line (Pangkal-AirAnyir 150kV) - With SMR (Peak)",
+      "with_smr": true,
+      "load_factor": 1.0,
+      "event_type": "Line Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.2,
+      "details": "Freq Nadir: 49.20 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-08",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Transmission Line (Pangkal-AirAnyir 150kV) - With SMR (Low)",
+      "with_smr": true,
+      "load_factor": 0.6,
+      "event_type": "Line Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.2,
+      "details": "Freq Nadir: 49.20 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-09",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Transmission Line (Pangkal-AirAnyir 150kV) - Without SMR (Peak)",
+      "with_smr": false,
+      "load_factor": 1.0,
+      "event_type": "Line Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.2,
+      "details": "Freq Nadir: 49.20 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-10",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Transmission Line (Pangkal-AirAnyir 150kV) - Without SMR (Low)",
+      "with_smr": false,
+      "load_factor": 0.6,
+      "event_type": "Line Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.2,
+      "details": "Freq Nadir: 49.20 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-11",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Largest Non-SMR Gen (PLTD Air Anyir) - With SMR (Peak)",
+      "with_smr": true,
+      "load_factor": 1.0,
+      "event_type": "Gen Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.2,
+      "details": "Freq Nadir: 49.20 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-12",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Largest Non-SMR Gen (PLTD Air Anyir) - With SMR (Low)",
+      "with_smr": true,
+      "load_factor": 0.6,
+      "event_type": "Gen Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.2,
+      "details": "Freq Nadir: 49.20 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-13",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Largest Non-SMR Gen (PLTD Air Anyir) - Without SMR (Peak)",
+      "with_smr": false,
+      "load_factor": 1.0,
+      "event_type": "Gen Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.2,
+      "details": "Freq Nadir: 49.20 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-14",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Largest Non-SMR Gen (PLTD Air Anyir) - Without SMR (Low)",
+      "with_smr": false,
+      "load_factor": 0.6,
+      "event_type": "Gen Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.2,
+      "details": "Freq Nadir: 49.20 Hz, Clearing: 120ms"
+    }
+  ]
+}

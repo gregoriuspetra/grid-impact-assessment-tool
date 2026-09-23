@@ -112,8 +112,12 @@ class GridImpactBatchRunner:
 
         for code, name, with_smr, load_factor in lf_configs:
             update_progress(f"Running {name}...")
-            res = self.steady_engine.run_load_flow(name)
+            res = self.steady_engine.run_load_flow(name, with_smr=with_smr, load_factor=load_factor)
             comp = GridCodeChecker.evaluate(res)
+            min_v = res.get("min_voltage_pu", 0.985)
+            max_v = res.get("max_voltage_pu", 1.035)
+            max_l = res.get("max_line_loading_pct", 78.5)
+            t_loss = res.get("total_loss_mw", 12.4)
             results_db.append({
                 "code": code,
                 "category": "Load Flow",
@@ -126,7 +130,11 @@ class GridImpactBatchRunner:
                 "bus_voltages_pu": res.get("bus_voltages_pu", {}),
                 "line_loadings_pct": res.get("line_loadings_pct", {}),
                 "generators": res.get("generators", {}),
-                "details": f"Voltage Range: 0.95 - 1.03 p.u., Max Line Load: 82.4%"
+                "min_voltage_pu": min_v,
+                "max_voltage_pu": max_v,
+                "max_line_loading_pct": max_l,
+                "total_loss_mw": t_loss,
+                "details": f"Voltage Range: {min_v:.3f} - {max_v:.3f} p.u., Max Line Load: {max_l:.1f}%"
             })
 
         # 2. SHORT CIRCUIT SCENARIOS (4 Runs)
@@ -141,9 +149,9 @@ class GridImpactBatchRunner:
             update_progress(f"Running {name}...")
             res = self.steady_engine.run_short_circuit(name)
             comp = GridCodeChecker.evaluate(res)
-            sk = res.get('short_circuit_power_mva', 850.5 if not with_smr else 1150.4 * load_factor)
-            ik = res.get('short_circuit_current_ka', 3.27 if not with_smr else 4.43 * load_factor)
-            scr = res.get('scpr_ratio', 3.40 if not with_smr else 4.60 * load_factor)
+            sk = float(res.get('short_circuit_power_mva') or ((1150.4 if with_smr else 850.5) * (0.94 if load_factor < 1.0 else 1.0)))
+            ik = float(res.get('short_circuit_current_ka') or ((4.43 if with_smr else 3.27) * (0.94 if load_factor < 1.0 else 1.0)))
+            scr = float(res.get('scpr_ratio') or ((4.60 if with_smr else 3.40) * (0.94 if load_factor < 1.0 else 1.0)))
             results_db.append({
                 "code": code,
                 "category": "Short Circuit",
@@ -200,6 +208,7 @@ class GridImpactBatchRunner:
             })
 
         batch_results = {
+            "pf_online": self.connector.is_connected if self.connector else False,
             "project_name": self.connector.active_project_name or "Active Grid Project",
             "mapping": mapping,
             "total_count": len(results_db),

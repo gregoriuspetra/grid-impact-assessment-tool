@@ -1,0 +1,539 @@
+{
+  "timestamp": "2026-09-21 15:08:15",
+  "filename": "Assessment_14BusSystem_20260921_150815.json",
+  "filepath": "C:\\Users\\LENOVO\\.gemini\\antigravity\\scratch\\grid_impact_assessment_app\\results_history\\Assessment_14BusSystem_20260921_150815.json",
+  "project_name": "14 Bus System",
+  "mapping": {
+    "smr_gen": "Gen_0008",
+    "largest_non_smr_gen": "Gen_0001",
+    "biggest_load": "Load_0003",
+    "critical_line": "Line_0010_0011"
+  },
+  "total_count": 22,
+  "passed_count": 18,
+  "failed_count": 4,
+  "scenarios": [
+    {
+      "code": "LF-01",
+      "category": "Load Flow",
+      "name": "Load Flow - With SMR (Peak Load)",
+      "with_smr": true,
+      "load_factor": 1.0,
+      "status": "NON-COMPLIANT",
+      "score_pct": 50.0,
+      "failure_reason": "Overvoltage Violation: Bus 'Bus_0008' voltage rose to 1.090 p.u. (Max Limit: 1.05 p.u.)",
+      "bus_voltages_pu": {
+        "Bus_0001": 1.059999942779541,
+        "Bus_0002": 1.0449999657806208,
+        "Bus_0003": 1.0100000620551792,
+        "Bus_0004": 1.0186236145245764,
+        "Bus_0005": 1.0202638982677534,
+        "Bus_0006": 1.0700003059529524,
+        "Bus_0007": 1.061951265335326,
+        "Bus_0008": 1.0900003170432686,
+        "Bus_0009": 1.056346702737103,
+        "Bus_0010": 1.051328535519511,
+        "Bus_0011": 1.0570823295621343,
+        "Bus_0012": 1.055220512283604,
+        "Bus_0013": 1.0504429844766991,
+        "Bus_0014": 1.035795548692352
+      },
+      "line_loadings_pct": {
+        "Line_0001_0002/1": 32.6293332840509,
+        "Line_0001_0002/2": 32.6293332840509,
+        "Line_0001_0005": 31.22412217154173,
+        "Line_0002_0003": 30.697445741985057,
+        "Line_0002_0004": 23.516209136683738,
+        "Line_0002_0005": 17.42353613157554,
+        "Line_0003_0004": 10.44080457633412,
+        "Line_0004_0005": 27.274016436098503,
+        "Line_0006_0011": 13.278440588760512,
+        "Line_0006_0012": 13.360758613547166,
+        "Line_0006_0013": 31.286682508375343,
+        "Line_0009_0010": 11.231710956122908,
+        "Line_0009_0014": 16.769021071285962,
+        "Line_0010_0011": 6.776423959514542,
+        "Line_0012_0013": 2.940271179716825,
+        "Line_0013_0014": 9.794983050100846
+      },
+      "generators": {
+        "Gen_0001": {
+          "p_mw": 232.3857280994693,
+          "q_mvar": -16.888992558814397
+        },
+        "Gen_0002": {
+          "p_mw": 40.0000846201222,
+          "q_mvar": 42.39615351690256
+        },
+        "Gen_0003": {
+          "p_mw": 0.00013366052091257075,
+          "q_mvar": 23.39336998926089
+        },
+        "Gen_0006": {
+          "p_mw": 0.0002896806945815733,
+          "q_mvar": 12.239954287724274
+        },
+        "Gen_0008": {
+          "p_mw": 0.00013447721756154607,
+          "q_mvar": 17.35650086372688
+        }
+      },
+      "min_voltage_pu": 1.01,
+      "max_voltage_pu": 1.09,
+      "max_line_loading_pct": 32.6,
+      "total_loss_mw": 51.55,
+      "details": "Voltage Range: 1.010 - 1.090 p.u., Max Line Load: 32.6%"
+    },
+    {
+      "code": "LF-02",
+      "category": "Load Flow",
+      "name": "Load Flow - With SMR (Low Load)",
+      "with_smr": true,
+      "load_factor": 0.6,
+      "status": "NON-COMPLIANT",
+      "score_pct": 50.0,
+      "failure_reason": "Overvoltage Violation: Bus 'Bus_0008' voltage rose to 1.090 p.u. (Max Limit: 1.05 p.u.)",
+      "bus_voltages_pu": {
+        "Bus_0001": 1.059999942779541,
+        "Bus_0002": 1.0449999657806208,
+        "Bus_0003": 1.0100000620551792,
+        "Bus_0004": 1.0186236145245764,
+        "Bus_0005": 1.0202638982677534,
+        "Bus_0006": 1.0700003059529524,
+        "Bus_0007": 1.061951265335326,
+        "Bus_0008": 1.0900003170432686,
+        "Bus_0009": 1.056346702737103,
+        "Bus_0010": 1.051328535519511,
+        "Bus_0011": 1.0570823295621343,
+        "Bus_0012": 1.055220512283604,
+        "Bus_0013": 1.0504429844766991,
+        "Bus_0014": 1.035795548692352
+      },
+      "line_loadings_pct": {
+        "Line_0001_0002/1": 32.6293332840509,
+        "Line_0001_0002/2": 32.6293332840509,
+        "Line_0001_0005": 31.22412217154173,
+        "Line_0002_0003": 30.697445741985057,
+        "Line_0002_0004": 23.516209136683738,
+        "Line_0002_0005": 17.42353613157554,
+        "Line_0003_0004": 10.44080457633412,
+        "Line_0004_0005": 27.274016436098503,
+        "Line_0006_0011": 13.278440588760512,
+        "Line_0006_0012": 13.360758613547166,
+        "Line_0006_0013": 31.286682508375343,
+        "Line_0009_0010": 11.231710956122908,
+        "Line_0009_0014": 16.769021071285962,
+        "Line_0010_0011": 6.776423959514542,
+        "Line_0012_0013": 2.940271179716825,
+        "Line_0013_0014": 9.794983050100846
+      },
+      "generators": {
+        "Gen_0001": {
+          "p_mw": 232.3857280994693,
+          "q_mvar": -16.888992558814397
+        },
+        "Gen_0002": {
+          "p_mw": 40.0000846201222,
+          "q_mvar": 42.39615351690256
+        },
+        "Gen_0003": {
+          "p_mw": 0.00013366052091257075,
+          "q_mvar": 23.39336998926089
+        },
+        "Gen_0006": {
+          "p_mw": 0.0002896806945815733,
+          "q_mvar": 12.239954287724274
+        },
+        "Gen_0008": {
+          "p_mw": 0.00013447721756154607,
+          "q_mvar": 17.35650086372688
+        }
+      },
+      "min_voltage_pu": 1.01,
+      "max_voltage_pu": 1.09,
+      "max_line_loading_pct": 32.6,
+      "total_loss_mw": 45.85,
+      "details": "Voltage Range: 1.010 - 1.090 p.u., Max Line Load: 32.6%"
+    },
+    {
+      "code": "LF-03",
+      "category": "Load Flow",
+      "name": "Load Flow - Without SMR (Peak Load)",
+      "with_smr": false,
+      "load_factor": 1.0,
+      "status": "NON-COMPLIANT",
+      "score_pct": 50.0,
+      "failure_reason": "Overvoltage Violation: Bus 'Bus_0008' voltage rose to 1.090 p.u. (Max Limit: 1.05 p.u.)",
+      "bus_voltages_pu": {
+        "Bus_0001": 1.059999942779541,
+        "Bus_0002": 1.0449999657806208,
+        "Bus_0003": 1.0100000620551792,
+        "Bus_0004": 1.0186236145245764,
+        "Bus_0005": 1.0202638982677534,
+        "Bus_0006": 1.0700003059529524,
+        "Bus_0007": 1.061951265335326,
+        "Bus_0008": 1.0900003170432686,
+        "Bus_0009": 1.056346702737103,
+        "Bus_0010": 1.051328535519511,
+        "Bus_0011": 1.0570823295621343,
+        "Bus_0012": 1.055220512283604,
+        "Bus_0013": 1.0504429844766991,
+        "Bus_0014": 1.035795548692352
+      },
+      "line_loadings_pct": {
+        "Line_0001_0002/1": 32.6293332840509,
+        "Line_0001_0002/2": 32.6293332840509,
+        "Line_0001_0005": 31.22412217154173,
+        "Line_0002_0003": 30.697445741985057,
+        "Line_0002_0004": 23.516209136683738,
+        "Line_0002_0005": 17.42353613157554,
+        "Line_0003_0004": 10.44080457633412,
+        "Line_0004_0005": 27.274016436098503,
+        "Line_0006_0011": 13.278440588760512,
+        "Line_0006_0012": 13.360758613547166,
+        "Line_0006_0013": 31.286682508375343,
+        "Line_0009_0010": 11.231710956122908,
+        "Line_0009_0014": 16.769021071285962,
+        "Line_0010_0011": 6.776423959514542,
+        "Line_0012_0013": 2.940271179716825,
+        "Line_0013_0014": 9.794983050100846
+      },
+      "generators": {
+        "Gen_0001": {
+          "p_mw": 232.3857280994693,
+          "q_mvar": -16.888992558814397
+        },
+        "Gen_0002": {
+          "p_mw": 40.0000846201222,
+          "q_mvar": 42.39615351690256
+        },
+        "Gen_0003": {
+          "p_mw": 0.00013366052091257075,
+          "q_mvar": 23.39336998926089
+        },
+        "Gen_0006": {
+          "p_mw": 0.0002896806945815733,
+          "q_mvar": 12.239954287724274
+        },
+        "Gen_0008": {
+          "p_mw": 0.00013447721756154607,
+          "q_mvar": 17.35650086372688
+        }
+      },
+      "min_voltage_pu": 1.01,
+      "max_voltage_pu": 1.09,
+      "max_line_loading_pct": 32.6,
+      "total_loss_mw": 51.55,
+      "details": "Voltage Range: 1.010 - 1.090 p.u., Max Line Load: 32.6%"
+    },
+    {
+      "code": "LF-04",
+      "category": "Load Flow",
+      "name": "Load Flow - Without SMR (Low Load)",
+      "with_smr": false,
+      "load_factor": 0.6,
+      "status": "NON-COMPLIANT",
+      "score_pct": 50.0,
+      "failure_reason": "Overvoltage Violation: Bus 'Bus_0008' voltage rose to 1.090 p.u. (Max Limit: 1.05 p.u.)",
+      "bus_voltages_pu": {
+        "Bus_0001": 1.059999942779541,
+        "Bus_0002": 1.0449999657806208,
+        "Bus_0003": 1.0100000620551792,
+        "Bus_0004": 1.0186236145245764,
+        "Bus_0005": 1.0202638982677534,
+        "Bus_0006": 1.0700003059529524,
+        "Bus_0007": 1.061951265335326,
+        "Bus_0008": 1.0900003170432686,
+        "Bus_0009": 1.056346702737103,
+        "Bus_0010": 1.051328535519511,
+        "Bus_0011": 1.0570823295621343,
+        "Bus_0012": 1.055220512283604,
+        "Bus_0013": 1.0504429844766991,
+        "Bus_0014": 1.035795548692352
+      },
+      "line_loadings_pct": {
+        "Line_0001_0002/1": 32.6293332840509,
+        "Line_0001_0002/2": 32.6293332840509,
+        "Line_0001_0005": 31.22412217154173,
+        "Line_0002_0003": 30.697445741985057,
+        "Line_0002_0004": 23.516209136683738,
+        "Line_0002_0005": 17.42353613157554,
+        "Line_0003_0004": 10.44080457633412,
+        "Line_0004_0005": 27.274016436098503,
+        "Line_0006_0011": 13.278440588760512,
+        "Line_0006_0012": 13.360758613547166,
+        "Line_0006_0013": 31.286682508375343,
+        "Line_0009_0010": 11.231710956122908,
+        "Line_0009_0014": 16.769021071285962,
+        "Line_0010_0011": 6.776423959514542,
+        "Line_0012_0013": 2.940271179716825,
+        "Line_0013_0014": 9.794983050100846
+      },
+      "generators": {
+        "Gen_0001": {
+          "p_mw": 232.3857280994693,
+          "q_mvar": -16.888992558814397
+        },
+        "Gen_0002": {
+          "p_mw": 40.0000846201222,
+          "q_mvar": 42.39615351690256
+        },
+        "Gen_0003": {
+          "p_mw": 0.00013366052091257075,
+          "q_mvar": 23.39336998926089
+        },
+        "Gen_0006": {
+          "p_mw": 0.0002896806945815733,
+          "q_mvar": 12.239954287724274
+        },
+        "Gen_0008": {
+          "p_mw": 0.00013447721756154607,
+          "q_mvar": 17.35650086372688
+        }
+      },
+      "min_voltage_pu": 1.01,
+      "max_voltage_pu": 1.09,
+      "max_line_loading_pct": 32.6,
+      "total_loss_mw": 45.85,
+      "details": "Voltage Range: 1.010 - 1.090 p.u., Max Line Load: 32.6%"
+    },
+    {
+      "code": "SC-01",
+      "category": "Short Circuit",
+      "name": "Short Circuit - With SMR (Peak Load)",
+      "with_smr": true,
+      "load_factor": 1.0,
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "short_circuit_power_mva": 850.5,
+      "short_circuit_current_ka": 3.27,
+      "scpr_ratio": 3.402,
+      "details": "S\"k: 850.5 MVA, I\"k: 3.27 kA, SCR: 3.40"
+    },
+    {
+      "code": "SC-02",
+      "category": "Short Circuit",
+      "name": "Short Circuit - With SMR (Low Load)",
+      "with_smr": true,
+      "load_factor": 0.6,
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "short_circuit_power_mva": 850.5,
+      "short_circuit_current_ka": 3.27,
+      "scpr_ratio": 3.402,
+      "details": "S\"k: 850.5 MVA, I\"k: 3.27 kA, SCR: 3.40"
+    },
+    {
+      "code": "SC-03",
+      "category": "Short Circuit",
+      "name": "Short Circuit - Without SMR (Peak Load)",
+      "with_smr": false,
+      "load_factor": 1.0,
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "short_circuit_power_mva": 850.5,
+      "short_circuit_current_ka": 3.27,
+      "scpr_ratio": 3.402,
+      "details": "S\"k: 850.5 MVA, I\"k: 3.27 kA, SCR: 3.40"
+    },
+    {
+      "code": "SC-04",
+      "category": "Short Circuit",
+      "name": "Short Circuit - Without SMR (Low Load)",
+      "with_smr": false,
+      "load_factor": 0.6,
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "short_circuit_power_mva": 850.5,
+      "short_circuit_current_ka": 3.27,
+      "scpr_ratio": 3.402,
+      "details": "S\"k: 850.5 MVA, I\"k: 3.27 kA, SCR: 3.40"
+    },
+    {
+      "code": "DYN-01",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of SMR (Peak Load)",
+      "with_smr": true,
+      "load_factor": 1.0,
+      "event_type": "SMR Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-02",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of SMR (Low Load)",
+      "with_smr": true,
+      "load_factor": 0.6,
+      "event_type": "SMR Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-03",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Biggest Load (Load_0003) - With SMR (Peak)",
+      "with_smr": true,
+      "load_factor": 1.0,
+      "event_type": "Load Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-04",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Biggest Load (Load_0003) - With SMR (Low)",
+      "with_smr": true,
+      "load_factor": 0.6,
+      "event_type": "Load Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-05",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Biggest Load (Load_0003) - Without SMR (Peak)",
+      "with_smr": false,
+      "load_factor": 1.0,
+      "event_type": "Load Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-06",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Biggest Load (Load_0003) - Without SMR (Low)",
+      "with_smr": false,
+      "load_factor": 0.6,
+      "event_type": "Load Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-07",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Transmission Line (Line_0010_0011) - With SMR (Peak)",
+      "with_smr": true,
+      "load_factor": 1.0,
+      "event_type": "Line Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-08",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Transmission Line (Line_0010_0011) - With SMR (Low)",
+      "with_smr": true,
+      "load_factor": 0.6,
+      "event_type": "Line Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-09",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Transmission Line (Line_0010_0011) - Without SMR (Peak)",
+      "with_smr": false,
+      "load_factor": 1.0,
+      "event_type": "Line Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-10",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Transmission Line (Line_0010_0011) - Without SMR (Low)",
+      "with_smr": false,
+      "load_factor": 0.6,
+      "event_type": "Line Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-11",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Largest Non-SMR Gen (Gen_0001) - With SMR (Peak)",
+      "with_smr": true,
+      "load_factor": 1.0,
+      "event_type": "Gen Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-12",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Largest Non-SMR Gen (Gen_0001) - With SMR (Low)",
+      "with_smr": true,
+      "load_factor": 0.6,
+      "event_type": "Gen Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-13",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Largest Non-SMR Gen (Gen_0001) - Without SMR (Peak)",
+      "with_smr": false,
+      "load_factor": 1.0,
+      "event_type": "Gen Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-14",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Largest Non-SMR Gen (Gen_0001) - Without SMR (Low)",
+      "with_smr": false,
+      "load_factor": 0.6,
+      "event_type": "Gen Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    }
+  ]
+}
