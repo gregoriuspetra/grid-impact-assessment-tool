@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import os
 import sys
 import logging
@@ -19,6 +19,8 @@ class PowerFactoryConnector:
         self.active_project_name = None
         self.custom_api_path = None
         self.last_error_message = ""
+        self.peak_scen_obj = None
+        self.low_scen_obj = None
         self.init_connection()
 
     def init_connection(self) -> bool:
@@ -73,6 +75,8 @@ class PowerFactoryConnector:
             else:
                 self.last_error_message = "pf.GetApplication() returned None. Ensure PowerFactory is open or license is active."
         except Exception as e:
+            if "powerfactory" in sys.modules:
+                sys.modules.pop("powerfactory", None)
             self.last_error_message = f"Connection Error: {e}"
             logger.warning(f"Error connecting at {api_folder_path}: {e}")
 
@@ -244,46 +248,157 @@ class PowerFactoryConnector:
                 biggest_load = name
                 load_found = True
 
-        # 4. Detect Critical Transmission Line connected to SMR
+        # 4. Detect Critical Transmission Line connected to SMR (Direct, Trafo Traversal, or Substation Keyword)
         critical_line = ""
         line_found = False
         if smr_obj:
             try:
-                smr_bus = smr_obj.GetAttribute("bus1")
-                if smr_bus:
-                    smr_term = smr_bus.GetAttribute("cterm")
+                smr_terms = set()
+                # Get direct terminals connected to SMR generator
+                b1 = smr_obj.GetAttribute("bus1")
+                if b1:
+                    ct = b1.GetAttribute("cterm") if hasattr(b1, "GetAttribute") and b1.GetAttribute("cterm") else b1
+                    if ct:
+                        smr_terms.add(ct)
+                try:
+                    for i in (0, 1):
+                        t = smr_obj.GetTerminal(i)
+                        if t:
+                            smr_terms.add(t)
+                except Exception:
+                    pass
+
+                # Traverse Step-Up Transformers (ElmTr2) to find the High-Voltage (150kV) Substation Busbar
+                hv_terms = set(smr_terms)
+                all_trafos = self.app.GetCalcRelevantObjects("*.ElmTr2") or []
+                for tr in all_trafos:
+                    tr_b1 = tr.GetAttribute("bus1")
+                    tr_b2 = tr.GetAttribute("bus2")
+                    ct1 = tr_b1.GetAttribute("cterm") if tr_b1 and hasattr(tr_b1, "GetAttribute") else tr_b1
+                    ct2 = tr_b2.GetAttribute("cterm") if tr_b2 and hasattr(tr_b2, "GetAttribute") else tr_b2
+                    if ct1 in smr_terms or ct2 in smr_terms:
+                        if ct1:
+                            hv_terms.add(ct1)
+                        if ct2:
+                            hv_terms.add(ct2)
+
+                # 1. Topological Match: Find line connected to SMR LV terminal or HV substation busbar
+                for l in all_lines:
+                    l_b1 = l.GetAttribute("bus1")
+                    l_b2 = l.GetAttribute("bus2")
+                    l_ct1 = l_b1.GetAttribute("cterm") if l_b1 and hasattr(l_b1, "GetAttribute") else l_b1
+                    l_ct2 = l_b2.GetAttribute("cterm") if l_b2 and hasattr(l_b2, "GetAttribute") else l_b2
+                    if l_ct1 in hv_terms or l_ct2 in hv_terms:
+                        critical_line = l.GetAttribute("loc_name") or ""
+                        line_found = True
+                        break
+
+                # 2. Keyword Match: If topology is isolated, match by SMR / Substation location name
+                if not line_found and smr_name:
+                    smr_words = [w for w in smr_name.replace("-", " ").split() if len(w) > 2 and w.lower() not in ("smr", "unit", "gen", "generator", "pltn", "reaktor", "1", "2", "3")]
+                    if not smr_words:
+                        for t in smr_terms:
+                            t_name = t.GetAttribute("loc_name") or ""
+                            smr_words.extend([w for w in t_name.replace("-", " ").split() if len(w) > 2 and w.lower() not in ("bus", "terminal", "150kv", "20kv", "kv", "1", "2")])
+
                     for l in all_lines:
-                        b1 = l.GetAttribute("bus1")
-                        b2 = l.GetAttribute("bus2")
-                        if (b1 and b1.GetAttribute("cterm") == smr_term) or (b2 and b2.GetAttribute("cterm") == smr_term):
-                            critical_line = l.GetAttribute("loc_name") or ""
-                            line_found = True
+                        l_name = l.GetAttribute("loc_name") or ""
+                        l_lower = l_name.lower()
+                        for w in smr_words:
+                            if w.lower() in l_lower:
+                                critical_line = l_name
+                                line_found = True
+                                break
+                        if line_found:
                             break
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Error detecting SMR interconnection line: {e}")
 
         if not critical_line and all_lines:
             critical_line = all_lines[0].GetAttribute("loc_name") or ""
 
-        # 5. Detect Operation Scenarios
-        peak_scen = "Peak Load (WBP)"
-        low_scen = "Low Load (LWBP)"
-        scen_found = False
+        # 5. Detect Operation Scenarios ('Peak Load'/'WBP' vs 'Low Load'/'LWBP')
+        self.peak_scen_obj = None
+        self.low_scen_obj = None
+        peak_scen = ""
+        low_scen = ""
+        peak_found = False
+        low_found = False
         try:
-            scheme_folder = self.app.GetProjectFolder("scheme")
-            if scheme_folder:
-                scenarios_obj = scheme_folder.GetContents("*.SetSchm")
-                for s in scenarios_obj:
-                    s_name = s.GetAttribute("loc_name") or ""
-                    s_lower = s_name.lower()
-                    if "peak" in s_lower or "wbp" in s_lower:
-                        peak_scen = s_name
-                        scen_found = True
-                    elif "low" in s_lower or "lwbp" in s_lower:
+            candidates = []
+            seen_ptrs = set()
+            proj = self.app.GetActiveProject()
+
+            # Search scenario & scheme folders in PowerFactory (only IntScenario and SetSchm / IntScheme)
+            for f_name in ["scen", "scheme", "study", "var"]:
+                folder = self.app.GetProjectFolder(f_name)
+                if folder:
+                    for ext in ["*.IntScenario", "*.SetSchm", "*.IntScheme"]:
+                        objs = folder.GetContents(ext, 1)
+                        if objs:
+                            for o in objs:
+                                ptr = getattr(o, "_ptr", id(o))
+                                if ptr not in seen_ptrs:
+                                    seen_ptrs.add(ptr)
+                                    candidates.append(o)
+
+            # Search active project recursively if folder lookup returned empty
+            if proj and not candidates:
+                for ext in ["*.IntScenario", "*.SetSchm", "*.IntScheme"]:
+                    objs = proj.GetContents(ext, 1)
+                    if objs:
+                        for o in objs:
+                            ptr = getattr(o, "_ptr", id(o))
+                            if ptr not in seen_ptrs:
+                                seen_ptrs.add(ptr)
+                                candidates.append(o)
+
+            for s in candidates:
+                try:
+                    s_name = s.GetAttribute("loc_name") or str(getattr(s, "loc_name", "")) or ""
+                except Exception:
+                    s_name = ""
+
+                if not s_name:
+                    continue
+
+                s_lower = s_name.lower()
+                s_clean = s_lower.replace("flow", "")
+                s_words = set(s_clean.replace("-", " ").replace("_", " ").replace("(", " ").replace(")", " ").split())
+
+                # Clean keyword classification
+                is_low_kw = "lwbp" in s_clean or "low" in s_words or "luar beban" in s_clean or "off-peak" in s_clean or "minimum" in s_words or "min" in s_words
+                is_peak_kw = ("wbp" in s_clean and "lwbp" not in s_clean) or "peak" in s_words or "puncak" in s_words or "max" in s_words or "maximum" in s_words
+
+                if is_low_kw and not is_peak_kw:
+                    if not low_found or "lwbp" in s_lower:
                         low_scen = s_name
-                        scen_found = True
-        except Exception:
-            pass
+                        self.low_scen_obj = s
+                        low_found = True
+                elif is_peak_kw and not is_low_kw:
+                    if not peak_found or ("wbp" in s_lower and "lwbp" not in s_lower):
+                        peak_scen = s_name
+                        self.peak_scen_obj = s
+                        peak_found = True
+                elif is_low_kw and is_peak_kw:
+                    if "lwbp" in s_lower or "off-peak" in s_lower:
+                        if not low_found:
+                            low_scen = s_name
+                            self.low_scen_obj = s
+                            low_found = True
+                    elif "wbp" in s_lower or "beban puncak" in s_lower:
+                        if not peak_found:
+                            peak_scen = s_name
+                            self.peak_scen_obj = s
+                            peak_found = True
+        except Exception as e:
+            logger.warning(f"Failed to auto-detect operation scenarios: {e}")
+
+        scen_found = peak_found or low_found
+        if not peak_scen:
+            peak_scen = "Peak Load (WBP)"
+        if not low_scen:
+            low_scen = "Low Load (LWBP)"
 
         return {
             "smr_gen": smr_name or "SMR Generator",
@@ -340,7 +455,8 @@ class PowerFactoryConnector:
         total_mw = 0.0
         for ld in all_loads:
             try:
-                total_mw += float(ld.GetAttribute("plini") or 0.0)
+                mw = float(ld.GetAttribute("plini") or ld.GetAttribute("m:P:bus1") or 0.0)
+                total_mw += mw
             except Exception:
                 pass
 
@@ -354,8 +470,8 @@ class PowerFactoryConnector:
             "is_custom_pfd": True
         }
 
-    def get_hv_grid_elements(self, min_voltage_kv: float = 100.0) -> Dict[str, Any]:
-        """Returns High Voltage Transmission Grid elements (>=100kV) specifically for visual charts."""
+    def get_hv_grid_elements(self, min_voltage_kv: float = 0.0) -> Dict[str, Any]:
+        """Returns ALL Transmission Grid elements from the active PowerFactory project without truncation."""
         all_elements = self.get_grid_elements()
         if not self.is_connected or not self.app:
             return all_elements
@@ -376,14 +492,11 @@ class PowerFactoryConnector:
         if not hv_buses:
             hv_buses = all_elements.get("buses", [])
 
-        lines = all_elements.get("lines", [])
-        generators = all_elements.get("generators", [])
-
         return {
             "project_name": all_elements.get("project_name", ""),
-            "buses": hv_buses[:10] if len(hv_buses) > 10 else hv_buses,
-            "lines": lines[:8] if len(lines) > 8 else lines,
-            "generators": generators[:6] if len(generators) > 6 else generators,
+            "buses": hv_buses,
+            "lines": all_elements.get("lines", []),
+            "generators": all_elements.get("generators", []),
             "loads_list": all_elements.get("loads_list", []),
             "total_load_mw": all_elements.get("total_load_mw", 0.0)
         }

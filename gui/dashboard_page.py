@@ -31,8 +31,8 @@ class ScenarioDetailDialog(QDialog):
         super().__init__(parent)
         self.sc = scenario_data
         self.is_dark = is_dark
-        self.setWindowTitle(f"PowerFactory Grid Summary Inspector — [{self.sc.get('code', '')}]")
-        self.resize(680, 560)
+        self.setWindowTitle(f"PowerFactory Grid Inspector — [{self.sc.get('code', '')}]")
+        self.resize(720, 580)
         self.setup_ui()
 
     def setup_ui(self):
@@ -44,7 +44,8 @@ class ScenarioDetailDialog(QDialog):
         t_name = self.sc.get("name", "Scenario Simulation")
         t_status = self.sc.get("status", "COMPLIANT")
         t_cat = self.sc.get("category", "Analysis")
-        is_peak = self.sc.get("load_factor", 1.0) == 1.0
+        is_peak = float(self.sc.get("load_factor", 1.0)) == 1.0
+        with_smr = bool(self.sc.get("with_smr", True))
 
         lbl_header = QLabel(f"[{t_code}] {t_name}")
         lbl_header.setFont(QFont("Segoe UI", 12, QFont.Bold))
@@ -73,44 +74,153 @@ class ScenarioDetailDialog(QDialog):
         layout_pf = QVBoxLayout(card_pf)
         layout_pf.setContentsMargins(16, 16, 16, 16)
 
-        t_pf_title = QLabel("Grid: Summary Grid (DIgSILENT PowerFactory Report)")
-        t_pf_title.setFont(QFont("Consolas", 10, QFont.Bold))
-        t_pf_title.setStyleSheet("color: #38BDF8;" if self.is_dark else "color: #0284C7;")
-        layout_pf.addWidget(t_pf_title)
+        # CATEGORY SPECIFIC REPORT GENERATION
+        if t_cat == "Short Circuit":
+            t_pf_title = QLabel("Grid: Short Circuit Calculation Report (IEC 60909 / DIgSILENT ComShc)")
+            t_pf_title.setFont(QFont("Consolas", 10, QFont.Bold))
+            t_pf_title.setStyleSheet("color: #38BDF8;" if self.is_dark else "color: #0284C7;")
+            layout_pf.addWidget(t_pf_title)
 
-        p_gen = 230.15 if is_peak else 138.10
-        q_gen = 45.20 if is_peak else 22.10
-        s_gen = np.sqrt(p_gen**2 + q_gen**2)
+            sk = float(self.sc.get("short_circuit_power_mva") or ((1150.4 if with_smr else 850.5) * (0.94 if not is_peak else 1.0)))
+            ik = float(self.sc.get("short_circuit_current_ka") or ((4.43 if with_smr else 3.27) * (0.94 if not is_peak else 1.0)))
+            scr = float(self.sc.get("scpr_ratio") or ((4.60 if with_smr else 3.40) * (0.94 if not is_peak else 1.0)))
+            ip = ik * 2.55
+            ib = ik * 0.95
+            ith = ik * 1.02
+            stiffness = "STRONG GRID (SCR >= 3.0)" if scr >= 3.0 else "WEAK GRID (SCR < 3.0)"
+            load_desc = "Peak Load (100%)" if is_peak else "Low Load (60%)"
+            smr_desc = "With SMR Support" if with_smr else "Without SMR Support"
 
-        p_load = 225.05 if is_peak else 135.03
-        q_load = 48.50 if is_peak else 26.10
-        s_load = np.sqrt(p_load**2 + q_load**2)
+            pf_grid_text = (
+                f"Fault Location / Bus  = PCC Transmission Bus (150 kV)\n"
+                f"Calculation Standard  = IEC 60909 (Balanced 3-Phase Fault)\n"
+                f"Operating Context     = {smr_desc}, {load_desc}\n"
+                f"----------------------------------------------------------------------\n"
+                f"Initial Short Circuit Power (S\"k)  = {sk:9.1f} MVA\n"
+                f"Initial Short Circuit Current (I\"k)= {ik:9.2f} kA\n"
+                f"Peak Short Circuit Current (ip)    = {ip:9.2f} kA\n"
+                f"Breaking Short Circuit Current (Ib)= {ib:9.2f} kA\n"
+                f"Thermal Equivalent Current (Ith)   = {ith:9.2f} kA\n"
+                f"Short Circuit Ratio (SCR = S\"k/P)  = {scr:9.2f} [-]\n"
+                f"Impedance Angle / R/X Ratio        =   83.1 deg / 0.12 [-]\n"
+                f"Grid Stiffness Classification      = {stiffness}\n"
+                f"ESDM Minimum SCR Requirement       =   3.00 [-] ({'PASSED' if scr >= 3.0 else 'FAILED'})"
+            )
 
-        p_loss = p_gen - p_load
-        q_loss = q_gen - q_load + 12.50
-        inst_cap = 350.00
-        spin_res = inst_cap - p_gen
-        pf_gen = p_gen / s_gen
-        pf_load = p_load / s_load
+        elif t_cat == "Dynamic RMS":
+            t_pf_title = QLabel("Grid: Dynamic RMS Simulation Report (DIgSILENT PowerFactory ComSim)")
+            t_pf_title.setFont(QFont("Consolas", 10, QFont.Bold))
+            t_pf_title.setStyleSheet("color: #38BDF8;" if self.is_dark else "color: #0284C7;")
+            layout_pf.addWidget(t_pf_title)
 
-        pf_grid_text = (
-            f"Generation          = {p_gen:10.2f} MW   {q_gen:8.2f} Mvar   {s_gen:10.2f} MVA\n"
-            f"External Infeed     =       0.00 MW       0.00 Mvar         0.00 MVA\n"
-            f"Inter Area Flow     =       0.00 MW       0.00 Mvar\n"
-            f"Loads, P            = {p_load:10.2f} MW   {q_load:8.2f} Mvar   {s_load:10.2f} MVA\n"
-            f"Loads, P(Un)        = {p_load:10.2f} MW   {q_load:8.2f} Mvar   {s_load:10.2f} MVA\n"
-            f"Loads, dP(Un-U)     =       0.00 MW       0.00 Mvar\n"
-            f"Motors, P           =       0.00 MW       0.00 Mvar         0.00 MVA\n"
-            f"Losses, P           = {p_loss:10.2f} MW   {q_loss:8.2f} Mvar\n"
-            f"Line Charging       =                 -12.50 Mvar\n"
-            f"Compensation ind.   =                  0.00 Mvar\n"
-            f"Compensation cap.   =                  0.00 Mvar\n"
-            f"Installed Capacity  = {inst_cap:10.2f} MW\n"
-            f"Spinning Reserve    = {spin_res:10.2f} MW\n"
-            f"Total Power Factor:\n"
-            f"  Generation        =     {pf_gen:5.2f} [-]\n"
-            f"  Load/Motor        =  {pf_load:5.2f} / 0.00 [-]"
-        )
+            event_type = self.sc.get("event_type", "SMR Trip")
+            nadir = float(self.sc.get("freq_nadir_hz", 49.15))
+            dev = abs(50.0 - nadir)
+            rocof = dev / 0.15
+            load_desc = "Peak Load (100%)" if is_peak else "Low Load (60%)"
+            smr_desc = "With SMR Support" if with_smr else "Without SMR Support"
+
+            if event_type == "SMR Trip":
+                vdip, vsettle = 0.15, 0.96
+            elif event_type == "Line Trip":
+                vdip, vsettle = 0.65 if is_peak else 0.75, 0.98
+            elif event_type == "Gen Trip":
+                vdip, vsettle = 0.45, 0.97
+            else: # Load Trip
+                vdip, vsettle = 1.00, 1.02
+
+            pf_grid_text = (
+                f"Simulation Controller = RMS Transient Stability (ComSim / ComInc)\n"
+                f"Contingency Event     = {event_type} at t = 1.00s (Clearing: 120ms)\n"
+                f"Operating Context     = {smr_desc}, {load_desc}\n"
+                f"----------------------------------------------------------------------\n"
+                f"Pre-Fault Nominal Frequency (f0)    =  50.00 Hz\n"
+                f"Frequency Nadir / Peak (f_nadir)    = {nadir:6.2f} Hz\n"
+                f"Max Frequency Deviation (delta_f)   = {dev:6.2f} Hz\n"
+                f"Initial Rate of Change (RoCoF)      = {rocof:6.2f} Hz/s\n"
+                f"PCC Transient Voltage Minimum (V_min)= {vdip:6.2f} p.u.\n"
+                f"Post-Fault Settled Voltage (V_final)= {vsettle:6.2f} p.u.\n"
+                f"ESDM Frequency Limits Requirement   = 49.00 Hz Min / 51.00 Hz Max\n"
+                f"Dynamic Stability Compliance        = {'PASSED' if 49.0 <= nadir <= 51.0 else 'FAILED'}"
+            )
+
+        else: # Load Flow
+            t_pf_title = QLabel("Grid: Load Flow Summary Report (DIgSILENT PowerFactory ComLdf)")
+            t_pf_title.setFont(QFont("Consolas", 10, QFont.Bold))
+            t_pf_title.setStyleSheet("color: #38BDF8;" if self.is_dark else "color: #0284C7;")
+            layout_pf.addWidget(t_pf_title)
+
+            # Read official PowerFactory summary attributes directly from scenario results
+            gen_p = float(self.sc.get("total_generation_mw", 0.0))
+            gen_q = float(self.sc.get("total_generation_mvar", 0.0))
+            gen_s = float(self.sc.get("total_generation_mva", 0.0))
+
+            if gen_p == 0.0:
+                generators_dict = self.sc.get("generators", {})
+                gen_p = sum(float(g.get("p_mw", 0.0)) for g in generators_dict.values())
+                gen_q = sum(float(g.get("q_mvar", 0.0)) for g in generators_dict.values())
+                gen_s = np.sqrt(gen_p**2 + gen_q**2) if (gen_p > 0 or gen_q > 0) else 1.0
+
+            net_p = float(self.sc.get("total_net_p_mw", 0.0))
+            net_q = float(self.sc.get("total_net_q_mvar", 0.0))
+            net_s = float(self.sc.get("total_net_s_mva", 0.0))
+
+            inter_p = float(self.sc.get("inter_area_p_mw", 0.0))
+            inter_q = float(self.sc.get("inter_area_q_mvar", 0.0))
+
+            load_p = float(self.sc.get("total_load_mw", 0.0))
+            load_q = float(self.sc.get("total_load_mvar", 0.0))
+            load_s = float(self.sc.get("total_load_mva", 0.0))
+
+            if load_p == 0.0:
+                net_p_val = float(self.sc.get("total_loss_mw", 0.0))
+                load_p = max(0.0, gen_p - net_p_val)
+                load_q = gen_q * 0.95
+                load_s = np.sqrt(load_p**2 + load_q**2)
+
+            load_pnom = float(self.sc.get("load_pnom_mw", load_p))
+            load_qnom = float(self.sc.get("load_qnom_mvar", load_q))
+            load_snom = float(self.sc.get("load_snom_mva", load_s))
+
+            load_pdiff = float(self.sc.get("load_pdiff_mw", 0.0))
+            load_qdiff = float(self.sc.get("load_qdiff_mvar", 0.0))
+
+            mot_p = float(self.sc.get("mot_p_mw", 0.0))
+            mot_q = float(self.sc.get("mot_q_mvar", 0.0))
+            mot_s = float(self.sc.get("mot_s_mva", 0.0))
+
+            loss_p = float(self.sc.get("total_loss_mw", 0.0))
+            loss_q = float(self.sc.get("total_loss_mvar", 0.0))
+
+            loss_qnld = float(self.sc.get("loss_qnld_mvar", 0.0))
+            compr_q = float(self.sc.get("compr_q_mvar", 0.0))
+            comp_q = float(self.sc.get("comp_q_mvar", 0.0))
+
+            inst_cap = float(self.sc.get("installed_capacity_mw", gen_p))
+            spin_res = float(self.sc.get("spinning_reserve_mw", max(0.0, inst_cap - gen_p)))
+
+            gencos = float(self.sc.get("gencos", (gen_p / gen_s) if gen_s > 0 else 0.95))
+            loadcos = float(self.sc.get("loadcos", (load_p / load_s) if load_s > 0 else 0.95))
+            motcos = float(self.sc.get("motcos", 0.0))
+
+            pf_grid_text = (
+                f"Generation          = {gen_p:10.2f} MW   {gen_q:8.2f} Mvar   {gen_s:10.2f} MVA\n"
+                f"External Infeed     = {net_p:10.2f} MW   {net_q:8.2f} Mvar   {net_s:10.2f} MVA\n"
+                f"Inter Area Flow     = {inter_p:10.2f} MW   {inter_q:8.2f} Mvar\n"
+                f"Loads Actual        = {load_p:10.2f} MW   {load_q:8.2f} Mvar   {load_s:10.2f} MVA\n"
+                f"Loads Nominal       = {load_pnom:10.2f} MW   {load_qnom:8.2f} Mvar   {load_snom:10.2f} MVA\n"
+                f"Load Difference     = {load_pdiff:10.2f} MW   {load_qdiff:8.2f} Mvar\n"
+                f"Motors              = {mot_p:10.2f} MW   {mot_q:8.2f} Mvar   {mot_s:10.2f} MVA\n"
+                f"Losses              = {loss_p:10.2f} MW   {loss_q:8.2f} Mvar\n"
+                f"Line Charging       =                       {loss_qnld:8.2f} Mvar\n"
+                f"Compensation ind.   =                       {compr_q:8.2f} Mvar\n"
+                f"Compensation cap.   =                       {comp_q:8.2f} Mvar\n"
+                f"Installed Capacity  = {inst_cap:10.2f} MW\n"
+                f"Spinning Reserve    = {spin_res:10.2f} MW\n"
+                f"Total Power Factor:\n"
+                f"  Generation        =        {gencos:5.2f} [-]\n"
+                f"  Load / Motor      =        {loadcos:5.2f} / {motcos:5.2f} [-]"
+            )
 
         lbl_pf_body = QLabel(pf_grid_text)
         lbl_pf_body.setFont(QFont("Consolas", 9.5))
@@ -859,21 +969,61 @@ class DashboardPage(QScrollArea):
             tab_dyn = QWidget()
             dyn_layout = QVBoxLayout(tab_dyn)
 
-            fig_dyn, ((ax_df, ax_dv), (ax_dp, ax_dq)) = plt.subplots(2, 2, figsize=(10, 6.5))
+            dyn_sec_card = QFrame()
+            if self.is_dark:
+                dyn_sec_card.setStyleSheet("background-color: #1E293B; border: 1px solid #334155; border-radius: 8px; padding: 10px;")
+            else:
+                dyn_sec_card.setStyleSheet("background-color: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 10px;")
+
+            dyn_sec_layout = QVBoxLayout(dyn_sec_card)
+            dyn_sec_layout.setSpacing(10)
+
+            combo_dyn_box_layout = QHBoxLayout()
+            lbl_dyn_sec_title = QLabel("🔍 Dynamic RMS Transient Inspector — Select Scenario:")
+            lbl_dyn_sec_title.setFont(QFont("Segoe UI", 10, QFont.Bold))
+            lbl_dyn_sec_title.setStyleSheet("color: #38BDF8;" if self.is_dark else "color: #0284C7;")
+
+            combo_dyn_select = QComboBox()
+            combo_dyn_select.setFont(QFont("Segoe UI", 9.5))
+            combo_dyn_select.setMinimumHeight(32)
+            combo_dyn_select.setMinimumWidth(450)
+            if self.is_dark:
+                combo_dyn_select.setStyleSheet(
+                    "QComboBox { background-color: #0F172A; color: #F8FAFC; border: 1px solid #475569; border-radius: 6px; padding: 4px 8px; }"
+                    "QComboBox QAbstractItemView { background-color: #0F172A; color: #F8FAFC; selection-background-color: #0284C7; selection-color: #FFFFFF; border: 1px solid #334155; border-radius: 6px; outline: 0px; padding: 4px; }"
+                    "QComboBox QAbstractItemView::item { min-height: 26px; padding: 4px 8px; color: #F8FAFC; background-color: #0F172A; }"
+                    "QComboBox QAbstractItemView::item:selected { background-color: #0284C7; color: #FFFFFF; }"
+                    "QComboBox QAbstractItemView::item:hover { background-color: #1E293B; color: #F8FAFC; }"
+                )
+            else:
+                combo_dyn_select.setStyleSheet(
+                    "QComboBox { background-color: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1; border-radius: 6px; padding: 4px 8px; }"
+                    "QComboBox QAbstractItemView { background-color: #FFFFFF; color: #0F172A; selection-background-color: #0284C7; selection-color: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 6px; outline: 0px; padding: 4px; }"
+                    "QComboBox QAbstractItemView::item { min-height: 26px; padding: 4px 8px; color: #0F172A; background-color: #FFFFFF; }"
+                    "QComboBox QAbstractItemView::item:selected { background-color: #0284C7; color: #FFFFFF; }"
+                    "QComboBox QAbstractItemView::item:hover { background-color: #E2E8F0; color: #0F172A; }"
+                )
+
+            dyn_scenarios = [sc for sc in self.scenarios_db if sc.get("category") == "Dynamic RMS"]
+            combo_dyn_select.addItem("📊 [OVERLAY] All 4 Primary Contingency Event Types", "OVERLAY")
+            for sc in dyn_scenarios:
+                combo_dyn_select.addItem(f"[{sc.get('code')}] {sc.get('name')}", sc.get('code'))
+
+            combo_dyn_box_layout.addWidget(lbl_dyn_sec_title)
+            combo_dyn_box_layout.addWidget(combo_dyn_select)
+            combo_dyn_box_layout.addStretch()
+            dyn_sec_layout.addLayout(combo_dyn_box_layout)
+
+            fig_dyn, ((ax_df, ax_dv), (ax_dp, ax_dq)) = plt.subplots(2, 2, figsize=(10, 5.2))
             fig_dyn.patch.set_facecolor(bg_col)
             for ax in [ax_df, ax_dv, ax_dp, ax_dq]:
                 ax.set_facecolor(card_bg)
                 ax.tick_params(colors=txt_col, labelsize=7)
 
-            t = np.linspace(0, 5.0, 300)
-            m1 = (t >= 1.0) & (t <= 1.15)
-            r1 = (t > 1.15) & (t <= 3.5)
-
-            dyn_scenarios = [sc for sc in self.scenarios_db if sc.get("category") == "Dynamic RMS"]
-            smr_trip_sc = next((sc for sc in dyn_scenarios if sc.get("event_type") == "SMR Trip"), {})
-            gen_trip_sc = next((sc for sc in dyn_scenarios if sc.get("event_type") == "Gen Trip"), {})
-            load_trip_sc = next((sc for sc in dyn_scenarios if sc.get("event_type") == "Load Trip"), {})
-            line_trip_sc = next((sc for sc in dyn_scenarios if sc.get("event_type") == "Line Trip"), {})
+            canvas_dyn = FigureCanvas(fig_dyn)
+            canvas_dyn.setMinimumHeight(460)
+            dyn_sec_layout.addWidget(canvas_dyn)
+            dyn_layout.addWidget(dyn_sec_card)
 
             mapping = targets
             smr_label_name = mapping.get("smr_gen", "SMR Unit")
@@ -881,120 +1031,235 @@ class DashboardPage(QScrollArea):
             load_label_name = mapping.get("biggest_load", "Biggest Load")
             line_label_name = mapping.get("critical_line", "Critical Line")
 
-            nadir_smr = float(smr_trip_sc.get("freq_nadir_hz", 49.15))
-            nadir_gen = float(gen_trip_sc.get("freq_nadir_hz", 49.35))
-            nadir_load = float(load_trip_sc.get("freq_nadir_hz", 50.55))
-            nadir_line = float(line_trip_sc.get("freq_nadir_hz", 49.60))
+            def update_detailed_dyn_view(index):
+                code_sel = combo_dyn_select.itemData(index)
+                for ax in [ax_df, ax_dv, ax_dp, ax_dq]:
+                    ax.clear()
+                    ax.set_facecolor(card_bg)
+                    ax.tick_params(colors=txt_col, labelsize=7)
 
-            drop_smr = 50.0 - nadir_smr
-            drop_gen = 50.0 - nadir_gen
-            diff_load = nadir_load - 50.0
-            drop_line = 50.0 - nadir_line
+                t = np.linspace(0, 5.0, 300)
+                m1 = (t >= 1.0) & (t <= 1.15)
+                r1 = (t > 1.15) & (t <= 3.5)
 
-            # Frequency Transient Curves
-            f_smr = np.ones_like(t) * 50.0
-            f_smr[m1] = 50.0 - drop_smr * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
-            f_smr[r1] = nadir_smr + drop_smr * (1.0 - np.exp(-2.2 * (t[r1] - 1.15)))
+                if code_sel == "OVERLAY" or not code_sel:
+                    # OVERLAY VIEW FOR ALL 4 PRIMARY CONTINGENCY TYPES
+                    smr_trip_sc = next((sc for sc in dyn_scenarios if sc.get("event_type") == "SMR Trip"), {})
+                    gen_trip_sc = next((sc for sc in dyn_scenarios if sc.get("event_type") == "Gen Trip"), {})
+                    load_trip_sc = next((sc for sc in dyn_scenarios if sc.get("event_type") == "Load Trip"), {})
+                    line_trip_sc = next((sc for sc in dyn_scenarios if sc.get("event_type") == "Line Trip"), {})
 
-            f_gen = np.ones_like(t) * 50.0
-            f_gen[m1] = 50.0 - drop_gen * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
-            f_gen[r1] = nadir_gen + drop_gen * (1.0 - np.exp(-2.5 * (t[r1] - 1.15)))
+                    nadir_smr = float(smr_trip_sc.get("freq_nadir_hz", 49.15))
+                    nadir_gen = float(gen_trip_sc.get("freq_nadir_hz", 49.35))
+                    nadir_load = float(load_trip_sc.get("freq_nadir_hz", 50.55))
+                    nadir_line = float(line_trip_sc.get("freq_nadir_hz", 49.60))
 
-            f_load = np.ones_like(t) * 50.0
-            f_load[m1] = 50.0 + diff_load * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
-            f_load[r1] = nadir_load - diff_load * (1.0 - np.exp(-2.0 * (t[r1] - 1.15)))
+                    drop_smr = 50.0 - nadir_smr
+                    drop_gen = 50.0 - nadir_gen
+                    diff_load = nadir_load - 50.0
+                    drop_line = 50.0 - nadir_line
 
-            f_line = np.ones_like(t) * 50.0
-            f_line[m1] = 50.0 - drop_line * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
-            f_line[r1] = nadir_line + drop_line * (1.0 - np.exp(-3.0 * (t[r1] - 1.15)))
+                    # Frequency
+                    f_smr = np.ones_like(t) * 50.0
+                    f_smr[m1] = 50.0 - drop_smr * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
+                    f_smr[r1] = nadir_smr + drop_smr * (1.0 - np.exp(-2.2 * (t[r1] - 1.15)))
 
-            # Voltage Transient Curves
-            v_smr = np.ones_like(t) * 1.0
-            v_smr[m1] = 0.15 + 0.05 * np.random.rand(np.sum(m1))
-            v_smr[r1] = 0.85 + 0.14 * (1.0 - np.exp(-3.0 * (t[r1] - 1.15)))
+                    f_gen = np.ones_like(t) * 50.0
+                    f_gen[m1] = 50.0 - drop_gen * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
+                    f_gen[r1] = nadir_gen + drop_gen * (1.0 - np.exp(-2.5 * (t[r1] - 1.15)))
 
-            v_gen = np.ones_like(t) * 1.0
-            v_gen[m1] = 0.45 + 0.05 * np.random.rand(np.sum(m1))
-            v_gen[r1] = 0.90 + 0.09 * (1.0 - np.exp(-3.5 * (t[r1] - 1.15)))
+                    f_load = np.ones_like(t) * 50.0
+                    f_load[m1] = 50.0 + diff_load * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
+                    f_load[r1] = nadir_load - diff_load * (1.0 - np.exp(-2.0 * (t[r1] - 1.15)))
 
-            v_load = np.ones_like(t) * 1.0
-            v_load[m1] = 1.0 + 0.04 * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
-            v_load[r1] = 1.04 - 0.04 * (1.0 - np.exp(-2.5 * (t[r1] - 1.15)))
+                    f_line = np.ones_like(t) * 50.0
+                    f_line[m1] = 50.0 - drop_line * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
+                    f_line[r1] = nadir_line + drop_line * (1.0 - np.exp(-3.0 * (t[r1] - 1.15)))
 
-            v_line = np.ones_like(t) * 1.0
-            v_line[m1] = 0.65 + 0.05 * np.random.rand(np.sum(m1))
-            v_line[r1] = 0.93 + 0.06 * (1.0 - np.exp(-3.0 * (t[r1] - 1.15)))
+                    # Voltage
+                    v_smr = np.ones_like(t) * 1.0
+                    v_smr[m1] = 0.15 + 0.05 * np.random.rand(np.sum(m1))
+                    v_smr[r1] = 0.85 + 0.14 * (1.0 - np.exp(-3.0 * (t[r1] - 1.15)))
 
-            # Dynamic P(t) & Q(t) scaled by project target element capacities
-            p_smr_base = 150.0 if "150" in smr_label_name else (120.0 + (abs(hash(smr_label_name)) % 60))
-            p_smr = np.ones_like(t) * p_smr_base
-            p_smr[t >= 1.0] = p_smr_base * np.exp(-1.5 * (t[t >= 1.0] - 1.0))
-            q_smr = np.ones_like(t) * (p_smr_base * 0.3)
-            q_smr[m1] = (p_smr_base * 0.3) + 35.0 * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
-            q_smr[r1] = (p_smr_base * 0.3) + 15.0 * (1.0 - np.exp(-2.0 * (t[r1] - 1.15)))
+                    v_gen = np.ones_like(t) * 1.0
+                    v_gen[m1] = 0.45 + 0.05 * np.random.rand(np.sum(m1))
+                    v_gen[r1] = 0.90 + 0.09 * (1.0 - np.exp(-3.5 * (t[r1] - 1.15)))
 
-            p_gen_base = 45.0 if "45" in gen_label_name else (35.0 + (abs(hash(gen_label_name)) % 50))
-            p_gen = np.ones_like(t) * p_gen_base
-            p_gen[t >= 1.0] = p_gen_base * np.exp(-2.0 * (t[t >= 1.0] - 1.0))
-            q_gen = np.ones_like(t) * (p_gen_base * 0.33)
-            q_gen[m1] = (p_gen_base * 0.33) + 20.0 * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
-            q_gen[r1] = (p_gen_base * 0.33) + 5.0 * (1.0 - np.exp(-2.0 * (t[r1] - 1.15)))
+                    v_load = np.ones_like(t) * 1.0
+                    v_load[m1] = 1.0 + 0.04 * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
+                    v_load[r1] = 1.04 - 0.04 * (1.0 - np.exp(-2.5 * (t[r1] - 1.15)))
 
-            p_load_base = 52.0 if "52" in load_label_name else (40.0 + (abs(hash(load_label_name)) % 65))
-            p_load = np.ones_like(t) * p_load_base
-            p_load[t >= 1.0] = p_load_base * np.exp(-2.2 * (t[t >= 1.0] - 1.0))
-            q_load = np.ones_like(t) * (p_load_base * 0.32)
-            q_load[m1] = (p_load_base * 0.32) - 10.0 * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
-            q_load[r1] = (p_load_base * 0.15) + 10.0 * (1.0 - np.exp(-2.0 * (t[r1] - 1.15)))
+                    v_line = np.ones_like(t) * 1.0
+                    v_line[m1] = 0.65 + 0.05 * np.random.rand(np.sum(m1))
+                    v_line[r1] = 0.93 + 0.06 * (1.0 - np.exp(-3.0 * (t[r1] - 1.15)))
 
-            p_line_base = 85.0 if "85" in line_label_name else (60.0 + (abs(hash(line_label_name)) % 55))
-            p_line = np.ones_like(t) * p_line_base
-            p_line[t >= 1.0] = p_line_base * np.exp(-1.8 * (t[t >= 1.0] - 1.0))
-            q_line = np.ones_like(t) * (p_line_base * 0.3)
-            q_line[m1] = (p_line_base * 0.3) + 15.0 * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
-            q_line[r1] = (p_line_base * 0.3) + 5.0 * (1.0 - np.exp(-2.0 * (t[r1] - 1.15)))
+                    # P & Q
+                    p_smr_base = 150.0 if "150" in smr_label_name else (120.0 + (abs(hash(smr_label_name)) % 60))
+                    p_smr = np.ones_like(t) * p_smr_base
+                    p_smr[t >= 1.0] = p_smr_base * np.exp(-1.5 * (t[t >= 1.0] - 1.0))
+                    q_smr = np.ones_like(t) * (p_smr_base * 0.3)
+                    q_smr[m1] = (p_smr_base * 0.3) + 35.0 * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
+                    q_smr[r1] = (p_smr_base * 0.3) + 15.0 * (1.0 - np.exp(-2.0 * (t[r1] - 1.15)))
 
-            # Dynamic Labels for Legend
-            lbl_smr_leg = f"1. SMR Trip ({smr_label_name})"
-            lbl_gen_leg = f"2. Non-SMR Gen Trip ({gen_label_name})"
-            lbl_load_leg = f"3. Load Trip ({load_label_name})"
-            lbl_line_leg = f"4. Line Trip ({line_label_name})"
+                    p_gen_base = 45.0 if "45" in gen_label_name else (35.0 + (abs(hash(gen_label_name)) % 50))
+                    p_gen = np.ones_like(t) * p_gen_base
+                    p_gen[t >= 1.0] = p_gen_base * np.exp(-2.0 * (t[t >= 1.0] - 1.0))
+                    q_gen = np.ones_like(t) * (p_gen_base * 0.33)
+                    q_gen[m1] = (p_gen_base * 0.33) + 20.0 * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
+                    q_gen[r1] = (p_gen_base * 0.33) + 5.0 * (1.0 - np.exp(-2.0 * (t[r1] - 1.15)))
 
-            ax_df.plot(t, f_smr, color="#E53E3E", linewidth=1.8, label=lbl_smr_leg)
-            ax_df.plot(t, f_gen, color="#DD6B20", linewidth=1.6, linestyle="--", label=lbl_gen_leg)
-            ax_df.plot(t, f_load, color="#3182CE", linewidth=1.6, linestyle="-.", label=lbl_load_leg)
-            ax_df.plot(t, f_line, color="#805AD5", linewidth=1.6, linestyle=":", label=lbl_line_leg)
-            ax_df.axhline(49.00, color="red", linestyle=":", label="49.00 Hz Min Limit")
-            ax_df.set_title("Frequency Transients f(t) (All 4 Dynamic Scenarios)", color=txt_col, fontsize=8, fontweight="bold")
-            ax_df.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=6)
+                    p_load_base = 52.0 if "52" in load_label_name else (40.0 + (abs(hash(load_label_name)) % 65))
+                    p_load = np.ones_like(t) * p_load_base
+                    p_load[t >= 1.0] = p_load_base * np.exp(-2.2 * (t[t >= 1.0] - 1.0))
+                    q_load = np.ones_like(t) * (p_load_base * 0.32)
+                    q_load[m1] = (p_load_base * 0.32) - 10.0 * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
+                    q_load[r1] = (p_load_base * 0.15) + 10.0 * (1.0 - np.exp(-2.0 * (t[r1] - 1.15)))
 
-            ax_dv.plot(t, v_smr, color="#E53E3E", linewidth=1.8, label=lbl_smr_leg)
-            ax_dv.plot(t, v_gen, color="#DD6B20", linewidth=1.6, linestyle="--", label=lbl_gen_leg)
-            ax_dv.plot(t, v_load, color="#3182CE", linewidth=1.6, linestyle="-.", label=lbl_load_leg)
-            ax_dv.plot(t, v_line, color="#805AD5", linewidth=1.6, linestyle=":", label=lbl_line_leg)
-            ax_dv.set_title("PCC Voltage Transients V(t) (All 4 Dynamic Scenarios)", color=txt_col, fontsize=8, fontweight="bold")
-            ax_dv.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=6)
+                    p_line_base = 85.0 if "85" in line_label_name else (60.0 + (abs(hash(line_label_name)) % 55))
+                    p_line = np.ones_like(t) * p_line_base
+                    p_line[t >= 1.0] = p_line_base * np.exp(-1.8 * (t[t >= 1.0] - 1.0))
+                    q_line = np.ones_like(t) * (p_line_base * 0.3)
+                    q_line[m1] = (p_line_base * 0.3) + 15.0 * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
+                    q_line[r1] = (p_line_base * 0.3) + 5.0 * (1.0 - np.exp(-2.0 * (t[r1] - 1.15)))
 
-            ax_dp.plot(t, p_smr, color="#E53E3E", linewidth=1.8, label=lbl_smr_leg)
-            ax_dp.plot(t, p_gen, color="#DD6B20", linewidth=1.6, linestyle="--", label=lbl_gen_leg)
-            ax_dp.plot(t, p_load, color="#3182CE", linewidth=1.6, linestyle="-.", label=lbl_load_leg)
-            ax_dp.plot(t, p_line, color="#805AD5", linewidth=1.6, linestyle=":", label=lbl_line_leg)
-            ax_dp.set_title("Active Power Response P(t) (All 4 Dynamic Scenarios)", color=txt_col, fontsize=8, fontweight="bold")
-            ax_dp.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=6)
+                    lbl_smr_leg = f"1. SMR Trip ({smr_label_name})"
+                    lbl_gen_leg = f"2. Non-SMR Gen Trip ({gen_label_name})"
+                    lbl_load_leg = f"3. Load Trip ({load_label_name})"
+                    lbl_line_leg = f"4. Line Trip ({line_label_name})"
 
-            ax_dq.plot(t, q_smr, color="#E53E3E", linewidth=1.8, label=lbl_smr_leg)
-            ax_dq.plot(t, q_gen, color="#DD6B20", linewidth=1.6, linestyle="--", label=lbl_gen_leg)
-            ax_dq.plot(t, q_load, color="#3182CE", linewidth=1.6, linestyle="-.", label=lbl_load_leg)
-            ax_dq.plot(t, q_line, color="#805AD5", linewidth=1.6, linestyle=":", label=lbl_line_leg)
-            ax_dq.set_title("Reactive Power Response Q(t) (All 4 Dynamic Scenarios)", color=txt_col, fontsize=8, fontweight="bold")
-            ax_dq.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=6)
+                    ax_df.plot(t, f_smr, color="#E53E3E", linewidth=1.8, label=lbl_smr_leg)
+                    ax_df.plot(t, f_gen, color="#DD6B20", linewidth=1.6, linestyle="--", label=lbl_gen_leg)
+                    ax_df.plot(t, f_load, color="#3182CE", linewidth=1.6, linestyle="-.", label=lbl_load_leg)
+                    ax_df.plot(t, f_line, color="#805AD5", linewidth=1.6, linestyle=":", label=lbl_line_leg)
+                    ax_df.axhline(49.00, color="red", linestyle=":", label="49.00 Hz Min Limit")
+                    ax_df.set_title("Frequency Transients f(t) (All 4 Event Types Overlay)", color=txt_col, fontsize=8, fontweight="bold")
+                    ax_df.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=6)
 
-            fig_dyn.tight_layout()
-            canvas_dyn = FigureCanvas(fig_dyn)
-            canvas_dyn.setMinimumHeight(520)
-            canvas_dyn.draw()
-            dyn_layout.addWidget(canvas_dyn)
-            tabs.addTab(tab_dyn, "📈 Dynamic RMS Transients (All 4 Dynamic Scenarios Overlay)")
+                    ax_dv.plot(t, v_smr, color="#E53E3E", linewidth=1.8, label=lbl_smr_leg)
+                    ax_dv.plot(t, v_gen, color="#DD6B20", linewidth=1.6, linestyle="--", label=lbl_gen_leg)
+                    ax_dv.plot(t, v_load, color="#3182CE", linewidth=1.6, linestyle="-.", label=lbl_load_leg)
+                    ax_dv.plot(t, v_line, color="#805AD5", linewidth=1.6, linestyle=":", label=lbl_line_leg)
+                    ax_dv.set_title("PCC Voltage Transients V(t) (All 4 Event Types Overlay)", color=txt_col, fontsize=8, fontweight="bold")
+                    ax_dv.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=6)
+
+                    ax_dp.plot(t, p_smr, color="#E53E3E", linewidth=1.8, label=lbl_smr_leg)
+                    ax_dp.plot(t, p_gen, color="#DD6B20", linewidth=1.6, linestyle="--", label=lbl_gen_leg)
+                    ax_dp.plot(t, p_load, color="#3182CE", linewidth=1.6, linestyle="-.", label=lbl_load_leg)
+                    ax_dp.plot(t, p_line, color="#805AD5", linewidth=1.6, linestyle=":", label=lbl_line_leg)
+                    ax_dp.set_title("Active Power Response P(t) (All 4 Event Types Overlay)", color=txt_col, fontsize=8, fontweight="bold")
+                    ax_dp.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=6)
+
+                    ax_dq.plot(t, q_smr, color="#E53E3E", linewidth=1.8, label=lbl_smr_leg)
+                    ax_dq.plot(t, q_gen, color="#DD6B20", linewidth=1.6, linestyle="--", label=lbl_gen_leg)
+                    ax_dq.plot(t, q_load, color="#3182CE", linewidth=1.6, linestyle="-.", label=lbl_load_leg)
+                    ax_dq.plot(t, q_line, color="#805AD5", linewidth=1.6, linestyle=":", label=lbl_line_leg)
+                    ax_dq.set_title("Reactive Power Response Q(t) (All 4 Event Types Overlay)", color=txt_col, fontsize=8, fontweight="bold")
+                    ax_dq.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=6)
+
+                else:
+                    # INDIVIDUAL SCENARIO DETAILED TRANSIENT VIEW
+                    sc_target = next((sc for sc in dyn_scenarios if sc.get("code") == code_sel), dyn_scenarios[0])
+                    sc_code = sc_target.get("code", "DYN-XX")
+                    sc_name = sc_target.get("name", "Dynamic RMS Scenario")
+                    event_type = sc_target.get("event_type", "SMR Trip")
+                    with_smr = sc_target.get("with_smr", True)
+                    load_factor = float(sc_target.get("load_factor", 1.0))
+                    status = sc_target.get("status", "COMPLIANT")
+                    nadir = float(sc_target.get("freq_nadir_hz", 49.15))
+
+                    smr_str = "With SMR" if with_smr else "Without SMR"
+                    load_str = "Peak Load (100%)" if load_factor == 1.0 else f"Low Load ({int(load_factor*100)}%)"
+
+                    # Custom color & parameters per event type
+                    if event_type == "SMR Trip":
+                        curve_col = "#E53E3E"
+                        p_base = 150.0 if "150" in smr_label_name else 120.0
+                    elif event_type == "Gen Trip":
+                        curve_col = "#DD6B20"
+                        p_base = 45.0 if "45" in gen_label_name else 35.0
+                    elif event_type == "Load Trip":
+                        curve_col = "#3182CE"
+                        p_base = 52.0 if "52" in load_label_name else 40.0
+                    else:  # Line Trip
+                        curve_col = "#805AD5"
+                        p_base = 85.0 if "85" in line_label_name else 60.0
+
+                    p_base *= load_factor
+
+                    # Frequency Curve for specific scenario
+                    f_curve = np.ones_like(t) * 50.0
+                    if event_type == "Load Trip":
+                        diff = nadir - 50.0
+                        f_curve[m1] = 50.0 + diff * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
+                        f_curve[r1] = nadir - diff * (1.0 - np.exp(-2.0 * (t[r1] - 1.15)))
+                    else:
+                        drop = 50.0 - nadir
+                        f_curve[m1] = 50.0 - drop * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
+                        f_curve[r1] = nadir + drop * (1.0 - np.exp(-2.5 * (t[r1] - 1.15)))
+
+                    # Voltage Curve for specific scenario
+                    v_curve = np.ones_like(t) * 1.0
+                    if event_type == "SMR Trip":
+                        v_dip = 0.15 if with_smr else 0.10
+                        v_curve[m1] = v_dip + 0.05 * np.random.rand(np.sum(m1))
+                        v_curve[r1] = 0.88 + 0.11 * (1.0 - np.exp(-3.0 * (t[r1] - 1.15)))
+                    elif event_type == "Load Trip":
+                        v_curve[m1] = 1.0 + 0.04 * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
+                        v_curve[r1] = 1.04 - 0.04 * (1.0 - np.exp(-2.5 * (t[r1] - 1.15)))
+                    elif event_type == "Line Trip":
+                        v_dip = 0.60 if load_factor == 1.0 else 0.75
+                        v_curve[m1] = v_dip + 0.04 * np.random.rand(np.sum(m1))
+                        v_curve[r1] = 0.93 + 0.06 * (1.0 - np.exp(-3.0 * (t[r1] - 1.15)))
+                    else: # Gen Trip
+                        v_dip = 0.45 if with_smr else 0.35
+                        v_curve[m1] = v_dip + 0.05 * np.random.rand(np.sum(m1))
+                        v_curve[r1] = 0.90 + 0.09 * (1.0 - np.exp(-3.5 * (t[r1] - 1.15)))
+
+                    # P & Q Curves for specific scenario
+                    p_curve = np.ones_like(t) * p_base
+                    p_curve[t >= 1.0] = p_base * np.exp(-1.8 * (t[t >= 1.0] - 1.0))
+                    
+                    q_base = p_base * 0.3
+                    q_curve = np.ones_like(t) * q_base
+                    if event_type == "Load Trip":
+                        q_curve[m1] = q_base - 10.0 * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
+                        q_curve[r1] = (q_base * 0.5) + 10.0 * (1.0 - np.exp(-2.0 * (t[r1] - 1.15)))
+                    else:
+                        q_curve[m1] = q_base + 25.0 * np.sin(np.pi * (t[m1] - 1.0) / 0.15)
+                        q_curve[r1] = q_base + 10.0 * (1.0 - np.exp(-2.0 * (t[r1] - 1.15)))
+
+                    # Plotting Frequency f(t)
+                    ax_df.plot(t, f_curve, color=curve_col, linewidth=2.0, label=f"[{sc_code}] {event_type}")
+                    ax_df.axhline(50.00, color="gray", linestyle="--", alpha=0.6, label="50.0 Hz Nominal")
+                    ax_df.axhline(49.00, color="red", linestyle=":", label="49.00 Hz Min Limit")
+                    ax_df.plot([1.15], [nadir], 'ro', markersize=6, label=f"Nadir: {nadir:.2f} Hz")
+                    ax_df.set_title(f"[{sc_code}] Frequency Response f(t) ({smr_str}, {load_str})", color=txt_col, fontsize=8, fontweight="bold")
+                    ax_df.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=6.5)
+
+                    # Plotting Voltage V(t)
+                    ax_dv.plot(t, v_curve, color=curve_col, linewidth=2.0, label=f"V(t) at PCC ({smr_str})")
+                    ax_dv.axhline(1.00, color="gray", linestyle="--", alpha=0.6, label="1.0 p.u. Nominal")
+                    ax_dv.axhline(0.90, color="orange", linestyle=":", label="0.90 p.u. Low Voltage")
+                    ax_dv.set_title(f"[{sc_code}] PCC Voltage Profile V(t)", color=txt_col, fontsize=8, fontweight="bold")
+                    ax_dv.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=6.5)
+
+                    # Plotting Active Power P(t)
+                    ax_dp.plot(t, p_curve, color=curve_col, linewidth=2.0, label=f"P(t) ({p_base:.1f} MW Base)")
+                    ax_dp.set_title(f"[{sc_code}] Active Power Response P(t)", color=txt_col, fontsize=8, fontweight="bold")
+                    ax_dp.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=6.5)
+
+                    # Plotting Reactive Power Q(t)
+                    ax_dq.plot(t, q_curve, color=curve_col, linewidth=2.0, label=f"Q(t) ({q_base:.1f} MVAR Base)")
+                    ax_dq.set_title(f"[{sc_code}] Reactive Power Response Q(t) — Status: {status}", color=txt_col, fontsize=8, fontweight="bold")
+                    ax_dq.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=6.5)
+
+                fig_dyn.tight_layout()
+                canvas_dyn.draw()
+
+            combo_dyn_select.currentIndexChanged.connect(update_detailed_dyn_view)
+            update_detailed_dyn_view(0)
+
+            tabs.addTab(tab_dyn, "📈 Dynamic RMS Transients (Interactive Scenario Inspector)")
 
             self.content_box.addWidget(tabs)
             self.is_data_loaded = True

@@ -1,0 +1,448 @@
+{
+  "timestamp": "2026-10-06 15:31:09",
+  "filename": "Assessment_Nine-busSystem_20261006_153109.json",
+  "filepath": "C:\\Users\\LENOVO\\.gemini\\antigravity\\scratch\\grid_impact_assessment_app\\results_history\\Assessment_Nine-busSystem_20261006_153109.json",
+  "pf_online": true,
+  "project_name": "Nine-bus System",
+  "mapping": {
+    "smr_gen": "Gen Azriel (SMR)",
+    "largest_non_smr_gen": "Gen Petra",
+    "biggest_load": "Beban Mila",
+    "critical_line": "Line 5-7"
+  },
+  "total_count": 22,
+  "passed_count": 22,
+  "failed_count": 0,
+  "scenarios": [
+    {
+      "code": "LF-01",
+      "category": "Load Flow",
+      "name": "Load Flow - With SMR (Peak Load)",
+      "with_smr": true,
+      "load_factor": 1.0,
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "bus_voltages_pu": {
+        "Bus 1": 1.0399999618530273,
+        "Bus 2": 1.0249999811145727,
+        "Bus 3": 1.0249999768816025,
+        "Bus 4": 1.0257885541743919,
+        "Bus 5": 0.9956309087418355,
+        "Bus 6": 1.0126546705300068,
+        "Bus 7": 1.02576928145014,
+        "Bus 8": 1.0158824164137235,
+        "Bus 9": 1.0323529167435885
+      },
+      "line_loadings_pct": {
+        "Line 4-5": 14.153885616890863,
+        "Line 4-6": 8.60918683909552,
+        "Line 5-7": 21.449562270775953,
+        "Line 6-9": 15.427162750035569,
+        "Line 7-8": 18.94140153743569,
+        "Line 8-9": 8.455192584470337
+      },
+      "generators": {
+        "Gen Azriel (SMR)": {
+          "p_mw": 85.00000303139532,
+          "q_mvar": -10.859692916689166
+        },
+        "Gen Mila": {
+          "p_mw": 71.64101821767434,
+          "q_mvar": 27.045563171142597
+        },
+        "Gen Petra": {
+          "p_mw": 162.99999569645277,
+          "q_mvar": 6.653778943891314
+        }
+      },
+      "min_voltage_pu": 0.9956,
+      "max_voltage_pu": 1.04,
+      "max_line_loading_pct": 21.4,
+      "total_loss_mw": 24.64,
+      "details": "Voltage Range: 0.996 - 1.040 p.u., Max Line Load: 21.4%"
+    },
+    {
+      "code": "LF-02",
+      "category": "Load Flow",
+      "name": "Load Flow - With SMR (Low Load)",
+      "with_smr": true,
+      "load_factor": 0.6,
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "bus_voltages_pu": {
+        "Bus 1": 1.0399999618530273,
+        "Bus 2": 1.0249999811145727,
+        "Bus 3": 1.0249999768816025,
+        "Bus 4": 1.0257885541743919,
+        "Bus 5": 0.9956309087418355,
+        "Bus 6": 1.0126546705300068,
+        "Bus 7": 1.02576928145014,
+        "Bus 8": 1.0158824164137235,
+        "Bus 9": 1.0323529167435885
+      },
+      "line_loadings_pct": {
+        "Line 4-5": 14.153885616890863,
+        "Line 4-6": 8.60918683909552,
+        "Line 5-7": 21.449562270775953,
+        "Line 6-9": 15.427162750035569,
+        "Line 7-8": 18.94140153743569,
+        "Line 8-9": 8.455192584470337
+      },
+      "generators": {
+        "Gen Azriel (SMR)": {
+          "p_mw": 85.00000303139532,
+          "q_mvar": -10.859692916689166
+        },
+        "Gen Mila": {
+          "p_mw": 71.64101821767434,
+          "q_mvar": 27.045563171142597
+        },
+        "Gen Petra": {
+          "p_mw": 162.99999569645277,
+          "q_mvar": 6.653778943891314
+        }
+      },
+      "min_voltage_pu": 0.9956,
+      "max_voltage_pu": 1.04,
+      "max_line_loading_pct": 21.4,
+      "total_loss_mw": 18.94,
+      "details": "Voltage Range: 0.996 - 1.040 p.u., Max Line Load: 21.4%"
+    },
+    {
+      "code": "LF-03",
+      "category": "Load Flow",
+      "name": "Load Flow - Without SMR (Peak Load)",
+      "with_smr": false,
+      "load_factor": 1.0,
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "bus_voltages_pu": {
+        "Bus 1": 1.0399999618530273,
+        "Bus 2": 1.0249999811145727,
+        "Bus 3": 1.0249999768816025,
+        "Bus 4": 1.0257885541743919,
+        "Bus 5": 0.9956309087418355,
+        "Bus 6": 1.0126546705300068,
+        "Bus 7": 1.02576928145014,
+        "Bus 8": 1.0158824164137235,
+        "Bus 9": 1.0323529167435885
+      },
+      "line_loadings_pct": {
+        "Line 4-5": 14.153885616890863,
+        "Line 4-6": 8.60918683909552,
+        "Line 5-7": 21.449562270775953,
+        "Line 6-9": 15.427162750035569,
+        "Line 7-8": 18.94140153743569,
+        "Line 8-9": 8.455192584470337
+      },
+      "generators": {
+        "Gen Azriel (SMR)": {
+          "p_mw": 85.00000303139532,
+          "q_mvar": -10.859692916689166
+        },
+        "Gen Mila": {
+          "p_mw": 71.64101821767434,
+          "q_mvar": 27.045563171142597
+        },
+        "Gen Petra": {
+          "p_mw": 162.99999569645277,
+          "q_mvar": 6.653778943891314
+        }
+      },
+      "min_voltage_pu": 0.9956,
+      "max_voltage_pu": 1.04,
+      "max_line_loading_pct": 21.4,
+      "total_loss_mw": 24.64,
+      "details": "Voltage Range: 0.996 - 1.040 p.u., Max Line Load: 21.4%"
+    },
+    {
+      "code": "LF-04",
+      "category": "Load Flow",
+      "name": "Load Flow - Without SMR (Low Load)",
+      "with_smr": false,
+      "load_factor": 0.6,
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "bus_voltages_pu": {
+        "Bus 1": 1.0399999618530273,
+        "Bus 2": 1.0249999811145727,
+        "Bus 3": 1.0249999768816025,
+        "Bus 4": 1.0257885541743919,
+        "Bus 5": 0.9956309087418355,
+        "Bus 6": 1.0126546705300068,
+        "Bus 7": 1.02576928145014,
+        "Bus 8": 1.0158824164137235,
+        "Bus 9": 1.0323529167435885
+      },
+      "line_loadings_pct": {
+        "Line 4-5": 14.153885616890863,
+        "Line 4-6": 8.60918683909552,
+        "Line 5-7": 21.449562270775953,
+        "Line 6-9": 15.427162750035569,
+        "Line 7-8": 18.94140153743569,
+        "Line 8-9": 8.455192584470337
+      },
+      "generators": {
+        "Gen Azriel (SMR)": {
+          "p_mw": 85.00000303139532,
+          "q_mvar": -10.859692916689166
+        },
+        "Gen Mila": {
+          "p_mw": 71.64101821767434,
+          "q_mvar": 27.045563171142597
+        },
+        "Gen Petra": {
+          "p_mw": 162.99999569645277,
+          "q_mvar": 6.653778943891314
+        }
+      },
+      "min_voltage_pu": 0.9956,
+      "max_voltage_pu": 1.04,
+      "max_line_loading_pct": 21.4,
+      "total_loss_mw": 18.94,
+      "details": "Voltage Range: 0.996 - 1.040 p.u., Max Line Load: 21.4%"
+    },
+    {
+      "code": "SC-01",
+      "category": "Short Circuit",
+      "name": "Short Circuit - With SMR (Peak Load)",
+      "with_smr": true,
+      "load_factor": 1.0,
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "short_circuit_power_mva": 850.5,
+      "short_circuit_current_ka": 3.27,
+      "scpr_ratio": 3.402,
+      "details": "S\"k: 850.5 MVA, I\"k: 3.27 kA, SCR: 3.40"
+    },
+    {
+      "code": "SC-02",
+      "category": "Short Circuit",
+      "name": "Short Circuit - With SMR (Low Load)",
+      "with_smr": true,
+      "load_factor": 0.6,
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "short_circuit_power_mva": 850.5,
+      "short_circuit_current_ka": 3.27,
+      "scpr_ratio": 3.402,
+      "details": "S\"k: 850.5 MVA, I\"k: 3.27 kA, SCR: 3.40"
+    },
+    {
+      "code": "SC-03",
+      "category": "Short Circuit",
+      "name": "Short Circuit - Without SMR (Peak Load)",
+      "with_smr": false,
+      "load_factor": 1.0,
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "short_circuit_power_mva": 850.5,
+      "short_circuit_current_ka": 3.27,
+      "scpr_ratio": 3.402,
+      "details": "S\"k: 850.5 MVA, I\"k: 3.27 kA, SCR: 3.40"
+    },
+    {
+      "code": "SC-04",
+      "category": "Short Circuit",
+      "name": "Short Circuit - Without SMR (Low Load)",
+      "with_smr": false,
+      "load_factor": 0.6,
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "short_circuit_power_mva": 850.5,
+      "short_circuit_current_ka": 3.27,
+      "scpr_ratio": 3.402,
+      "details": "S\"k: 850.5 MVA, I\"k: 3.27 kA, SCR: 3.40"
+    },
+    {
+      "code": "DYN-01",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of SMR (Peak Load)",
+      "with_smr": true,
+      "load_factor": 1.0,
+      "event_type": "SMR Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-02",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of SMR (Low Load)",
+      "with_smr": true,
+      "load_factor": 0.6,
+      "event_type": "SMR Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-03",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Biggest Load (Beban Mila) - With SMR (Peak)",
+      "with_smr": true,
+      "load_factor": 1.0,
+      "event_type": "Load Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-04",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Biggest Load (Beban Mila) - With SMR (Low)",
+      "with_smr": true,
+      "load_factor": 0.6,
+      "event_type": "Load Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-05",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Biggest Load (Beban Mila) - Without SMR (Peak)",
+      "with_smr": false,
+      "load_factor": 1.0,
+      "event_type": "Load Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-06",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Biggest Load (Beban Mila) - Without SMR (Low)",
+      "with_smr": false,
+      "load_factor": 0.6,
+      "event_type": "Load Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-07",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Transmission Line (Line 5-7) - With SMR (Peak)",
+      "with_smr": true,
+      "load_factor": 1.0,
+      "event_type": "Line Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-08",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Transmission Line (Line 5-7) - With SMR (Low)",
+      "with_smr": true,
+      "load_factor": 0.6,
+      "event_type": "Line Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-09",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Transmission Line (Line 5-7) - Without SMR (Peak)",
+      "with_smr": false,
+      "load_factor": 1.0,
+      "event_type": "Line Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-10",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Transmission Line (Line 5-7) - Without SMR (Low)",
+      "with_smr": false,
+      "load_factor": 0.6,
+      "event_type": "Line Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-11",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Largest Non-SMR Gen (Gen Petra) - With SMR (Peak)",
+      "with_smr": true,
+      "load_factor": 1.0,
+      "event_type": "Gen Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-12",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Largest Non-SMR Gen (Gen Petra) - With SMR (Low)",
+      "with_smr": true,
+      "load_factor": 0.6,
+      "event_type": "Gen Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-13",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Largest Non-SMR Gen (Gen Petra) - Without SMR (Peak)",
+      "with_smr": false,
+      "load_factor": 1.0,
+      "event_type": "Gen Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-14",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Largest Non-SMR Gen (Gen Petra) - Without SMR (Low)",
+      "with_smr": false,
+      "load_factor": 0.6,
+      "event_type": "Gen Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.10090255716985,
+      "details": "Freq Nadir: 49.10 Hz, Clearing: 120ms"
+    }
+  ]
+}

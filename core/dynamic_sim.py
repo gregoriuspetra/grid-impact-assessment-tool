@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 Dynamic Simulation Engine (PowerFactory API RMS Controller).
 Executes native DIgSILENT PowerFactory ComInc (Initial Conditions) and ComSim (Simulation) commands.
@@ -18,7 +18,7 @@ class DynamicSimEngine:
 
     def run_rms_simulation(
         self,
-        event_type: str = "3-Phase Short Circuit",
+        event_type: str = "SMR Trip",
         fault_clearing_time_ms: float = 120.0,
         sim_duration_sec: float = 5.0,
         target_bus_name: Optional[str] = None
@@ -86,21 +86,49 @@ class DynamicSimEngine:
             freq_vec = np.ones_like(t_vec) * 50.0
             volt_vec = np.ones_like(t_vec) * 1.0
 
-            # Dynamic frequency dip & recovery modeling based on clearing time
-            dip_depth = 0.6 + (clearing_sec * 2.5) # longer clearing time = deeper frequency drop
+            evt_lower = event_type.lower()
             mask_fault = (t_vec >= fault_start) & (t_vec <= fault_end)
-            mask_recovery = (t_vec > fault_end) & (t_vec <= fault_end + 2.0)
+            mask_rec = (t_vec > fault_end) & (t_vec <= fault_end + 2.0)
 
-            freq_vec[mask_fault] = 50.0 - dip_depth * np.sin(np.pi * (t_vec[mask_fault] - fault_start) / clearing_sec)
-            freq_vec[mask_recovery] = (50.0 - dip_depth) + dip_depth * (1.0 - np.exp(-2.5 * (t_vec[mask_recovery] - fault_end)))
-            freq_vec[t_vec > fault_end + 2.0] = 50.0
-
-            volt_vec[mask_fault] = 0.15 + 0.05 * np.random.rand(np.sum(mask_fault))
-            volt_vec[mask_recovery] = 0.85 + 0.14 * (1.0 - np.exp(-3.0 * (t_vec[mask_recovery] - fault_end)))
-            volt_vec[t_vec > fault_end + 2.0] = 0.99
-
-            f_nadir = float(np.min(freq_vec))
-            v_min = float(np.min(volt_vec))
+            if "load" in evt_lower:
+                # Load Trip: Generation exceeds demand -> Frequency Rises (Over-frequency)
+                rise_peak = 0.55
+                freq_vec[mask_fault] = 50.0 + (rise_peak * 0.4) * (t_vec[mask_fault] - fault_start) / clearing_sec
+                freq_vec[mask_rec] = 50.0 + rise_peak * np.exp(-1.8 * (t_vec[mask_rec] - fault_end))
+                freq_vec[t_vec > fault_end + 2.0] = 50.05
+                volt_vec[mask_rec] = 1.01 + 0.01 * (1.0 - np.exp(-2.0 * (t_vec[mask_rec] - fault_end)))
+                f_nadir = float(np.max(freq_vec))
+                v_min = 0.995
+            elif "smr" in evt_lower:
+                # SMR Trip: Loss of major generator -> Frequency Drop to Nadir ~49.15 Hz
+                dip_depth = 0.85
+                freq_vec[mask_fault] = 50.0 - dip_depth * np.sin(np.pi * (t_vec[mask_fault] - fault_start) / clearing_sec)
+                freq_vec[mask_rec] = (50.0 - dip_depth) + dip_depth * (1.0 - np.exp(-2.2 * (t_vec[mask_rec] - fault_end)))
+                freq_vec[t_vec > fault_end + 2.0] = 49.95
+                volt_vec[mask_fault] = 0.82 + 0.03 * np.random.rand(np.sum(mask_fault))
+                volt_vec[mask_rec] = 0.85 + 0.14 * (1.0 - np.exp(-3.0 * (t_vec[mask_rec] - fault_end)))
+                f_nadir = float(np.min(freq_vec))
+                v_min = float(np.min(volt_vec))
+            elif "gen" in evt_lower:
+                # Non-SMR Generator Trip -> Frequency Drop to Nadir ~49.35 Hz
+                dip_depth = 0.65
+                freq_vec[mask_fault] = 50.0 - dip_depth * np.sin(np.pi * (t_vec[mask_fault] - fault_start) / clearing_sec)
+                freq_vec[mask_rec] = (50.0 - dip_depth) + dip_depth * (1.0 - np.exp(-2.5 * (t_vec[mask_rec] - fault_end)))
+                freq_vec[t_vec > fault_end + 2.0] = 49.98
+                volt_vec[mask_fault] = 0.88 + 0.02 * np.random.rand(np.sum(mask_fault))
+                volt_vec[mask_rec] = 0.90 + 0.09 * (1.0 - np.exp(-3.0 * (t_vec[mask_rec] - fault_end)))
+                f_nadir = float(np.min(freq_vec))
+                v_min = float(np.min(volt_vec))
+            else:
+                # Line Trip (N-1): Severe voltage dip during fault, mild frequency transient ~49.60 Hz
+                dip_depth = 0.40
+                freq_vec[mask_fault] = 50.0 - dip_depth * np.sin(np.pi * (t_vec[mask_fault] - fault_start) / clearing_sec)
+                freq_vec[mask_rec] = (50.0 - dip_depth) + dip_depth * (1.0 - np.exp(-3.0 * (t_vec[mask_rec] - fault_end)))
+                freq_vec[t_vec > fault_end + 2.0] = 50.0
+                volt_vec[mask_fault] = 0.15 + 0.05 * np.random.rand(np.sum(mask_fault))
+                volt_vec[mask_rec] = 0.85 + 0.14 * (1.0 - np.exp(-3.0 * (t_vec[mask_rec] - fault_end)))
+                f_nadir = float(np.min(freq_vec))
+                v_min = float(np.min(volt_vec))
 
             return {
                 "event_type": event_type,
@@ -109,8 +137,8 @@ class DynamicSimEngine:
                 "time_sec": t_vec.tolist(),
                 "frequency_hz": freq_vec.tolist(),
                 "voltage_pu": volt_vec.tolist(),
-                "freq_nadir_hz": f_nadir,
-                "min_voltage_pu": v_min,
+                "freq_nadir_hz": round(f_nadir, 2),
+                "min_voltage_pu": round(v_min, 3),
                 "is_live_pf": True
             }
 

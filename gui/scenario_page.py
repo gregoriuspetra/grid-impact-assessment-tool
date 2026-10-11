@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
-                             QFrame, QComboBox, QDoubleSpinBox, QMessageBox, QScrollArea, QProgressBar)
+                             QFrame, QComboBox, QDoubleSpinBox, QMessageBox, QScrollArea, QProgressBar,
+                             QApplication)
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
@@ -244,8 +245,16 @@ class ScenarioPage(QScrollArea):
             self.refresh_element_mapping()
 
         if not self.connector.is_connected:
-            QMessageBox.critical(self, "PowerFactory Required", "❌ PowerFactory is disconnected. Connect PowerFactory in Step 1 first.")
-            return
+            reply = QMessageBox.question(
+                self,
+                "PowerFactory Connection Notice",
+                "DIgSILENT PowerFactory live API is not currently connected.\n\n"
+                "Would you like to execute the 22-Scenario Assessment in Grid Simulation Mode?",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.Yes
+            )
+            if reply != QMessageBox.Yes:
+                return
 
         mapping = {
             "smr_gen": self.combo_smr.currentText(),
@@ -259,6 +268,7 @@ class ScenarioPage(QScrollArea):
         def update_progress(pct: int, msg: str):
             self.progress_bar.setValue(pct)
             self.lbl_status_log.setText(f"Status: [{pct}%] {msg}")
+            QApplication.processEvents()
 
         results = self.batch_runner.run_all_22_scenarios(mapping, low_ratio, update_progress)
         self.latest_batch_results = results

@@ -9,3 +9,6 @@ temp_charts/
 *.pdf
 assets/temp_*
 scratch/
+.venv/
+venv/
+*.env
