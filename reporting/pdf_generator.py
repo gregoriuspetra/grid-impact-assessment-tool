@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 ReportLab Executive PDF Exporter for Grid Impact Assessment Tools.
 Generates concise multi-page PDF reports with detailed metric explanations per ESDM No. 20/2020.
@@ -95,9 +95,11 @@ class PDFReportGenerator:
 
         # 2.2 Short Circuit & PCC Grid Stiffness Metrics
         elements.append(Paragraph("2.2 Short Circuit & PCC Grid Stiffness Metrics", subheading_style))
+        pcc_bus_rep = assessment_data.get("mapping", {}).get("pcc_bus") or "Air Anyir"
         sc_metrics_text = (
+            f"• <b>Short Circuit Bus Location:</b> Evaluated at the Point of Common Coupling (PCC) substation busbar <b>'{pcc_bus_rep}'</b>.<br/>"
             "• <b>Short Circuit Current (I\"k in kA):</b> Symmetrical initial short-circuit current must not exceed substation circuit breaker interrupting capacities (typically 31.5 kA or 40.0 kA for 150 kV systems).<br/>"
-            "• <b>Short Circuit Power (S\"k in MVA):</b> 3-phase short-circuit capacity at the Point of Common Coupling (PCC) measuring local grid stiffness.<br/>"
+            f"• <b>Short Circuit Power (S\"k in MVA):</b> 3-phase short-circuit capacity at bus '{pcc_bus_rep}' measuring local grid stiffness.<br/>"
             "• <b>Short Circuit Power Ratio (SCR):</b> Evaluates grid strength relative to SMR capacity (SCR = S\"k / P_SMR). "
             "Statutory grid code requires <b>SCR ≥ 3.0</b> for strong grid coupling. An SCR < 3.0 indicates a weak grid connection susceptible to voltage instability."
         )
@@ -131,12 +133,16 @@ class PDFReportGenerator:
         ]
 
         for sc in scenarios:
+            fail_or_detail = str(sc.get("failure_reason", sc.get("details", "")))
+            if sc.get("category") == "Short Circuit" and sc.get("status") == "COMPLIANT":
+                pcc_sc = sc.get("pcc_bus") or pcc_bus_rep
+                fail_or_detail = f"Fault at Bus '{pcc_sc}': S\"k={float(sc.get('short_circuit_power_mva', 0.0)):.1f} MVA, SCR={float(sc.get('scpr_ratio', 0.0)):.2f}"
             table_data.append([
                 Paragraph(str(sc.get("code", "")), body_style),
                 Paragraph(str(sc.get("category", "")), body_style),
                 Paragraph(str(sc.get("name", "")), body_style),
                 Paragraph(f"<b>{sc.get('status', 'COMPLIANT')}</b>", body_style),
-                Paragraph(str(sc.get("failure_reason", sc.get("details", ""))), body_style)
+                Paragraph(fail_or_detail, body_style)
             ])
 
         t_matrix = Table(table_data, colWidths=[45, 70, 165, 75, 185])

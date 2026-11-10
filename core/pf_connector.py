@@ -21,6 +21,9 @@ class PowerFactoryConnector:
         self.last_error_message = ""
         self.peak_scen_obj = None
         self.low_scen_obj = None
+        self.scenario_objs_map: Dict[str, Any] = {}
+        self.user_selected_peak_scen: Optional[str] = None
+        self.user_selected_low_scen: Optional[str] = None
         self.init_connection()
 
     def init_connection(self) -> bool:
@@ -176,6 +179,10 @@ class PowerFactoryConnector:
                 "smr_detected": True,
                 "smr_msg": "Detected 'SMR Thorcon Unit 1' (Keyword 'SMR' Match)",
                 
+                "pcc_bus": "Air Anyir",
+                "pcc_detected": True,
+                "pcc_msg": "Detected 'Air Anyir' (150kV SMR Interconnection Substation Busbar)",
+
                 "largest_non_smr_gen": "PLTG MPP Air Anyir 1",
                 "non_smr_detected": True,
                 "non_smr_msg": "Detected 'PLTG MPP Air Anyir 1' (Max MW: 45.0 MW)",
@@ -248,9 +255,11 @@ class PowerFactoryConnector:
                 biggest_load = name
                 load_found = True
 
-        # 4. Detect Critical Transmission Line connected to SMR (Direct, Trafo Traversal, or Substation Keyword)
+        # 4. Detect Critical Transmission Line & PCC Substation Busbar connected to SMR
         critical_line = ""
         line_found = False
+        pcc_bus = ""
+        pcc_found = False
         if smr_obj:
             try:
                 smr_terms = set()
@@ -277,10 +286,25 @@ class PowerFactoryConnector:
                     ct1 = tr_b1.GetAttribute("cterm") if tr_b1 and hasattr(tr_b1, "GetAttribute") else tr_b1
                     ct2 = tr_b2.GetAttribute("cterm") if tr_b2 and hasattr(tr_b2, "GetAttribute") else tr_b2
                     if ct1 in smr_terms or ct2 in smr_terms:
+                        if ct1 in smr_terms and ct2:
+                            pcc_bus = ct2.GetAttribute("loc_name") or ""
+                            pcc_found = True
+                        elif ct2 in smr_terms and ct1:
+                            pcc_bus = ct1.GetAttribute("loc_name") or ""
+                            pcc_found = True
                         if ct1:
                             hv_terms.add(ct1)
                         if ct2:
                             hv_terms.add(ct2)
+
+                # Direct fallback to SMR generator terminal if no transformer
+                if not pcc_bus and smr_terms:
+                    for t in smr_terms:
+                        if t:
+                            pcc_bus = t.GetAttribute("loc_name") or ""
+                            if pcc_bus:
+                                pcc_found = True
+                                break
 
                 # 1. Topological Match: Find line connected to SMR LV terminal or HV substation busbar
                 for l in all_lines:
@@ -291,6 +315,11 @@ class PowerFactoryConnector:
                     if l_ct1 in hv_terms or l_ct2 in hv_terms:
                         critical_line = l.GetAttribute("loc_name") or ""
                         line_found = True
+                        if not pcc_bus:
+                            target_term = l_ct1 if l_ct1 in hv_terms else l_ct2
+                            if target_term:
+                                pcc_bus = target_term.GetAttribute("loc_name") or ""
+                                pcc_found = True
                         break
 
                 # 2. Keyword Match: If topology is isolated, match by SMR / Substation location name
@@ -317,6 +346,11 @@ class PowerFactoryConnector:
         if not critical_line and all_lines:
             critical_line = all_lines[0].GetAttribute("loc_name") or ""
 
+        if not pcc_bus:
+            all_buses = self.app.GetCalcRelevantObjects("*.ElmTerm") or []
+            if all_buses:
+                pcc_bus = all_buses[0].GetAttribute("loc_name") or ""
+
         # 5. Detect Operation Scenarios ('Peak Load'/'WBP' vs 'Low Load'/'LWBP')
         self.peak_scen_obj = None
         self.low_scen_obj = None
@@ -325,33 +359,7 @@ class PowerFactoryConnector:
         peak_found = False
         low_found = False
         try:
-            candidates = []
-            seen_ptrs = set()
-            proj = self.app.GetActiveProject()
-
-            # Search scenario & scheme folders in PowerFactory (only IntScenario and SetSchm / IntScheme)
-            for f_name in ["scen", "scheme", "study", "var"]:
-                folder = self.app.GetProjectFolder(f_name)
-                if folder:
-                    for ext in ["*.IntScenario", "*.SetSchm", "*.IntScheme"]:
-                        objs = folder.GetContents(ext, 1)
-                        if objs:
-                            for o in objs:
-                                ptr = getattr(o, "_ptr", id(o))
-                                if ptr not in seen_ptrs:
-                                    seen_ptrs.add(ptr)
-                                    candidates.append(o)
-
-            # Search active project recursively if folder lookup returned empty
-            if proj and not candidates:
-                for ext in ["*.IntScenario", "*.SetSchm", "*.IntScheme"]:
-                    objs = proj.GetContents(ext, 1)
-                    if objs:
-                        for o in objs:
-                            ptr = getattr(o, "_ptr", id(o))
-                            if ptr not in seen_ptrs:
-                                seen_ptrs.add(ptr)
-                                candidates.append(o)
+            candidates = self._collect_operation_scenarios()
 
             for s in candidates:
                 try:
@@ -400,10 +408,18 @@ class PowerFactoryConnector:
         if not low_scen:
             low_scen = "Low Load (LWBP)"
 
+        # Re-apply any explicit user manual overrides if already set
+        if self.user_selected_peak_scen is not None or self.user_selected_low_scen is not None:
+            self.set_selected_scenarios(self.user_selected_peak_scen, self.user_selected_low_scen)
+
         return {
             "smr_gen": smr_name or "SMR Generator",
             "smr_detected": smr_found,
             "smr_msg": f"Detected SMR Unit '{smr_name}' ('SMR'/'PLTN' Keyword)" if smr_found else "Not Detected (Selected default/manual fallback)",
+
+            "pcc_bus": pcc_bus or "Air Anyir",
+            "pcc_detected": pcc_found,
+            "pcc_msg": f"Detected PCC Substation Busbar '{pcc_bus}' (SMR Interconnection)" if pcc_found else "Not Detected (Selected default/manual fallback)",
 
             "largest_non_smr_gen": largest_non_smr or "Largest Generator",
             "non_smr_detected": non_smr_found,
@@ -423,6 +439,74 @@ class PowerFactoryConnector:
             "scen_msg": f"Detected Scenarios: '{peak_scen}' & '{low_scen}'" if scen_found else "Not Detected (Using Percentage Scaling Fallback 100% Peak / 60% Low)"
         }
 
+    def _collect_operation_scenarios(self) -> List[Any]:
+        """Collects all Operation Scenarios / Schemes from the active PowerFactory project."""
+        candidates = []
+        self.scenario_objs_map = {}
+        if not self.is_connected or not self.app:
+            return candidates
+
+        try:
+            seen_ptrs = set()
+            proj = self.app.GetActiveProject()
+
+            for f_name in ["scen", "scheme", "study", "var"]:
+                folder = self.app.GetProjectFolder(f_name)
+                if folder:
+                    for ext in ["*.IntScenario", "*.SetSchm", "*.IntScheme"]:
+                        objs = folder.GetContents(ext, 1)
+                        if objs:
+                            for o in objs:
+                                ptr = getattr(o, "_ptr", id(o))
+                                if ptr not in seen_ptrs:
+                                    seen_ptrs.add(ptr)
+                                    candidates.append(o)
+
+            if proj and not candidates:
+                for ext in ["*.IntScenario", "*.SetSchm", "*.IntScheme"]:
+                    objs = proj.GetContents(ext, 1)
+                    if objs:
+                        for o in objs:
+                            ptr = getattr(o, "_ptr", id(o))
+                            if ptr not in seen_ptrs:
+                                seen_ptrs.add(ptr)
+                                candidates.append(o)
+
+            for s in candidates:
+                try:
+                    s_name = s.GetAttribute("loc_name") or str(getattr(s, "loc_name", "")) or ""
+                except Exception:
+                    s_name = ""
+                if s_name and s_name not in self.scenario_objs_map:
+                    self.scenario_objs_map[s_name] = s
+        except Exception as e:
+            logger.warning(f"Error collecting operation scenarios: {e}")
+
+        return candidates
+
+    def set_selected_scenarios(self, peak_name: Optional[str], low_name: Optional[str]):
+        """Manually sets the Peak Load and Low Load Operation Scenario objects from user dropdown selection."""
+        self.user_selected_peak_scen = peak_name
+        self.user_selected_low_scen = low_name
+        if not self.scenario_objs_map and self.is_connected and self.app:
+            self._collect_operation_scenarios()
+
+        def _resolve_scen_obj(name: Optional[str]):
+            if not name or name.startswith("[None"):
+                return None
+            if name in self.scenario_objs_map:
+                return self.scenario_objs_map[name]
+            name_lower = name.strip().lower()
+            for k, obj in self.scenario_objs_map.items():
+                if k.strip().lower() == name_lower:
+                    return obj
+            return None
+
+        if peak_name is not None:
+            self.peak_scen_obj = _resolve_scen_obj(peak_name)
+        if low_name is not None:
+            self.low_scen_obj = _resolve_scen_obj(low_name)
+
     def get_grid_elements(self) -> Dict[str, Any]:
         """Returns ALL grid elements for Scenario Setup dropdown mapping."""
         if not self.is_connected or not self.app:
@@ -432,6 +516,7 @@ class PowerFactoryConnector:
                 "lines": ["Muntok-Kelapa", "Kelapa-Pangkalpinang", "Pangkalpinang-Air Anyir", "Air Anyir-Sungailiat", "Pangkalpinang-Koba", "Koba-Toboali"],
                 "generators": ["PLTD Merawang", "PLTD Air Anyir 1", "PLTD Air Anyir 2", "PLTG MPP Air Anyir 1", "SMR Thorcon Unit 1"],
                 "loads_list": ["Pangkalpinang Load", "Sungailiat Load", "Koba Load"],
+                "scenarios": ["Peak Load (WBP)", "Low Load (LWBP)"],
                 "total_load_mw": 225.05,
                 "is_custom_pfd": False
             }
@@ -446,11 +531,13 @@ class PowerFactoryConnector:
         all_lines = self.app.GetCalcRelevantObjects("*.ElmLne")
         all_gens = self.app.GetCalcRelevantObjects("*.ElmSym")
         all_loads = self.app.GetCalcRelevantObjects("*.ElmLod")
+        self._collect_operation_scenarios()
 
         buses = [b.GetAttribute("loc_name") for b in all_buses if b.GetAttribute("loc_name")]
         lines = [l.GetAttribute("loc_name") for l in all_lines if l.GetAttribute("loc_name")]
         generators = [g.GetAttribute("loc_name") for g in all_gens if g.GetAttribute("loc_name")]
         loads = [ld.GetAttribute("loc_name") for ld in all_loads if ld.GetAttribute("loc_name")]
+        scenarios = list(self.scenario_objs_map.keys())
 
         total_mw = 0.0
         for ld in all_loads:
@@ -466,6 +553,7 @@ class PowerFactoryConnector:
             "lines": lines,
             "generators": generators,
             "loads_list": loads,
+            "scenarios": scenarios,
             "total_load_mw": round(total_mw, 2) if total_mw > 0 else 0.0,
             "is_custom_pfd": True
         }

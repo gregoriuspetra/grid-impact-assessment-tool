@@ -1,0 +1,965 @@
+{
+  "timestamp": "2026-10-26 13:37:58",
+  "filename": "Assessment_Nine-busSystem_20261026_133758.json",
+  "filepath": "C:\\Users\\LENOVO\\.gemini\\antigravity\\scratch\\grid_impact_assessment_app\\results_history\\Assessment_Nine-busSystem_20261026_133758.json",
+  "pf_online": true,
+  "project_name": "Nine-bus System",
+  "mapping": {
+    "smr_gen": "Gen Azriel (SMR)",
+    "pcc_bus": "Bus 3",
+    "largest_non_smr_gen": "Gen Petra",
+    "biggest_load": "Beban Mila",
+    "critical_line": "Line 5-7"
+  },
+  "total_count": 22,
+  "passed_count": 21,
+  "failed_count": 1,
+  "scenarios": [
+    {
+      "code": "LF-01",
+      "category": "Load Flow",
+      "name": "Load Flow - With SMR (Peak Load)",
+      "with_smr": true,
+      "load_factor": 1.0,
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "bus_voltages_pu": {
+        "Bus 1": 1.0399999618530273,
+        "Bus 2": 1.0249999811145727,
+        "Bus 3": 1.0249999768816025,
+        "Bus 4": 1.0257885541743919,
+        "Bus 5": 0.9956309087418355,
+        "Bus 6": 1.0126546705300068,
+        "Bus 7": 1.02576928145014,
+        "Bus 8": 1.0158824164137235,
+        "Bus 9": 1.0323529167435885
+      },
+      "line_loadings_pct": {
+        "Line 4-5": 14.153885616890863,
+        "Line 4-6": 8.60918683909552,
+        "Line 5-7": 21.449562270775953,
+        "Line 6-9": 15.427162750035569,
+        "Line 7-8": 18.94140153743569,
+        "Line 8-9": 8.455192584470337
+      },
+      "generators": {
+        "Gen Azriel (SMR)": {
+          "p_mw": 85.00000303139532,
+          "q_mvar": -10.859692916689166
+        },
+        "Gen Mila": {
+          "p_mw": 71.64101821767434,
+          "q_mvar": 27.045563171142597
+        },
+        "Gen Petra": {
+          "p_mw": 162.99999569645277,
+          "q_mvar": 6.653778943891314
+        }
+      },
+      "min_voltage_pu": 0.9956,
+      "max_voltage_pu": 1.04,
+      "max_line_loading_pct": 21.4,
+      "total_loss_mw": 4.64,
+      "scenario": "Load Flow - With SMR (Peak Load)",
+      "project_name": "Nine-bus System",
+      "bus_powers": {
+        "Bus 1": {
+          "p_mw": 71.64,
+          "q_mvar": 27.05,
+          "p_load_mw": 0.0,
+          "q_load_mvar": 0.0,
+          "p_gen_mw": 71.64,
+          "q_gen_mvar": 27.05
+        },
+        "Bus 2": {
+          "p_mw": 163.0,
+          "q_mvar": 6.65,
+          "p_load_mw": 0.0,
+          "q_load_mvar": 0.0,
+          "p_gen_mw": 163.0,
+          "q_gen_mvar": 6.65
+        },
+        "Bus 3": {
+          "p_mw": 85.0,
+          "q_mvar": 10.86,
+          "p_load_mw": 0.0,
+          "q_load_mvar": 0.0,
+          "p_gen_mw": 85.0,
+          "q_gen_mvar": 10.86
+        },
+        "Bus 4": {
+          "p_mw": 0.0,
+          "q_mvar": 0.0,
+          "p_load_mw": 0.0,
+          "q_load_mvar": 0.0,
+          "p_gen_mw": 0.0,
+          "q_gen_mvar": 0.0
+        },
+        "Bus 5": {
+          "p_mw": 125.0,
+          "q_mvar": 50.0,
+          "p_load_mw": 125.0,
+          "q_load_mvar": 50.0,
+          "p_gen_mw": 0.0,
+          "q_gen_mvar": 0.0
+        },
+        "Bus 6": {
+          "p_mw": 90.0,
+          "q_mvar": 30.0,
+          "p_load_mw": 90.0,
+          "q_load_mvar": 30.0,
+          "p_gen_mw": 0.0,
+          "q_gen_mvar": 0.0
+        },
+        "Bus 7": {
+          "p_mw": 0.0,
+          "q_mvar": 0.0,
+          "p_load_mw": 0.0,
+          "q_load_mvar": 0.0,
+          "p_gen_mw": 0.0,
+          "q_gen_mvar": 0.0
+        },
+        "Bus 8": {
+          "p_mw": 100.0,
+          "q_mvar": 35.0,
+          "p_load_mw": 100.0,
+          "q_load_mvar": 35.0,
+          "p_gen_mw": 0.0,
+          "q_gen_mvar": 0.0
+        },
+        "Bus 9": {
+          "p_mw": 0.0,
+          "q_mvar": 0.0,
+          "p_load_mw": 0.0,
+          "q_load_mvar": 0.0,
+          "p_gen_mw": 0.0,
+          "q_gen_mvar": 0.0
+        }
+      },
+      "loads": {
+        "Beban Azriel": {
+          "p_mw": 100.0,
+          "q_mvar": 35.0,
+          "bus": "Bus 8"
+        },
+        "Beban Mila": {
+          "p_mw": 125.0,
+          "q_mvar": 50.0,
+          "bus": "Bus 5"
+        },
+        "Beban Petra": {
+          "p_mw": 90.0,
+          "q_mvar": 30.0,
+          "bus": "Bus 6"
+        }
+      },
+      "total_generation_mw": 319.64,
+      "total_generation_mvar": 22.84,
+      "total_generation_mva": 320.46,
+      "total_net_p_mw": 0.0,
+      "total_net_q_mvar": 0.0,
+      "total_net_s_mva": 0.0,
+      "inter_area_p_mw": 0.0,
+      "inter_area_q_mvar": 0.0,
+      "total_load_mw": 315.0,
+      "total_load_mvar": 115.0,
+      "total_load_mva": 335.34,
+      "load_pnom_mw": 315.0,
+      "load_qnom_mvar": 115.0,
+      "load_snom_mva": 335.34,
+      "load_pdiff_mw": -0.0,
+      "load_qdiff_mvar": -0.0,
+      "mot_p_mw": 0.0,
+      "mot_q_mvar": 0.0,
+      "mot_s_mva": 0.0,
+      "total_loss_mvar": -92.16,
+      "loss_qnld_mvar": -140.54,
+      "compr_q_mvar": 0.0,
+      "comp_q_mvar": 0.0,
+      "installed_capacity_mw": 519.5,
+      "spinning_reserve_mw": 199.86,
+      "gencos": 1.0,
+      "loadcos": 0.94,
+      "motcos": 0.0,
+      "is_live_pf": true,
+      "details": "Voltage Range: 0.996 - 1.040 p.u., Max Line Load: 21.4%"
+    },
+    {
+      "code": "LF-02",
+      "category": "Load Flow",
+      "name": "Load Flow - With SMR (Low Load)",
+      "with_smr": true,
+      "load_factor": 0.6,
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "bus_voltages_pu": {
+        "Bus 1": 1.0399999618530273,
+        "Bus 2": 1.0250007413258966,
+        "Bus 3": 1.0250000492084643,
+        "Bus 4": 1.0323584286554404,
+        "Bus 5": 1.016533851248143,
+        "Bus 6": 1.0296886450732412,
+        "Bus 7": 1.0363468438827785,
+        "Bus 8": 1.0342198555997715,
+        "Bus 9": 1.0410067168694108
+      },
+      "line_loadings_pct": {
+        "Line 4-5": 10.359944659747015,
+        "Line 4-6": 7.1180972533466615,
+        "Line 5-7": 26.138949337050192,
+        "Line 6-9": 20.49654818533491,
+        "Line 7-8": 13.872092130337366,
+        "Line 8-9": 4.394625674663163
+      },
+      "generators": {
+        "Gen Azriel (SMR)": {
+          "p_mw": 85.0000396280142,
+          "q_mvar": -26.012991288214113
+        },
+        "Gen Mila": {
+          "p_mw": -52.74267319767582,
+          "q_mvar": 14.543558227546043
+        },
+        "Gen Petra": {
+          "p_mw": 163.00013837417674,
+          "q_mvar": -10.773347860402197
+        }
+      },
+      "min_voltage_pu": 1.0165,
+      "max_voltage_pu": 1.041,
+      "max_line_loading_pct": 26.1,
+      "total_loss_mw": 6.26,
+      "scenario": "Load Flow - With SMR (Low Load)",
+      "project_name": "Nine-bus System",
+      "bus_powers": {
+        "Bus 1": {
+          "p_mw": 52.74,
+          "q_mvar": 14.54,
+          "p_load_mw": 0.0,
+          "q_load_mvar": 0.0,
+          "p_gen_mw": 52.74,
+          "q_gen_mvar": 14.54
+        },
+        "Bus 2": {
+          "p_mw": 163.0,
+          "q_mvar": 10.77,
+          "p_load_mw": 0.0,
+          "q_load_mvar": 0.0,
+          "p_gen_mw": 163.0,
+          "q_gen_mvar": 10.77
+        },
+        "Bus 3": {
+          "p_mw": 85.0,
+          "q_mvar": 26.01,
+          "p_load_mw": 0.0,
+          "q_load_mvar": 0.0,
+          "p_gen_mw": 85.0,
+          "q_gen_mvar": 26.01
+        },
+        "Bus 4": {
+          "p_mw": 0.0,
+          "q_mvar": 0.0,
+          "p_load_mw": 0.0,
+          "q_load_mvar": 0.0,
+          "p_gen_mw": 0.0,
+          "q_gen_mvar": 0.0
+        },
+        "Bus 5": {
+          "p_mw": 75.0,
+          "q_mvar": 30.0,
+          "p_load_mw": 75.0,
+          "q_load_mvar": 30.0,
+          "p_gen_mw": 0.0,
+          "q_gen_mvar": 0.0
+        },
+        "Bus 6": {
+          "p_mw": 54.0,
+          "q_mvar": 18.0,
+          "p_load_mw": 54.0,
+          "q_load_mvar": 18.0,
+          "p_gen_mw": 0.0,
+          "q_gen_mvar": 0.0
+        },
+        "Bus 7": {
+          "p_mw": 0.0,
+          "q_mvar": 0.0,
+          "p_load_mw": 0.0,
+          "q_load_mvar": 0.0,
+          "p_gen_mw": 0.0,
+          "q_gen_mvar": 0.0
+        },
+        "Bus 8": {
+          "p_mw": 60.0,
+          "q_mvar": 21.0,
+          "p_load_mw": 60.0,
+          "q_load_mvar": 21.0,
+          "p_gen_mw": 0.0,
+          "q_gen_mvar": 0.0
+        },
+        "Bus 9": {
+          "p_mw": 0.0,
+          "q_mvar": 0.0,
+          "p_load_mw": 0.0,
+          "q_load_mvar": 0.0,
+          "p_gen_mw": 0.0,
+          "q_gen_mvar": 0.0
+        }
+      },
+      "loads": {
+        "Beban Azriel": {
+          "p_mw": 60.0,
+          "q_mvar": 21.0,
+          "bus": "Bus 8"
+        },
+        "Beban Mila": {
+          "p_mw": 75.0,
+          "q_mvar": 30.0,
+          "bus": "Bus 5"
+        },
+        "Beban Petra": {
+          "p_mw": 54.0,
+          "q_mvar": 18.0,
+          "bus": "Bus 6"
+        }
+      },
+      "total_generation_mw": 195.26,
+      "total_generation_mvar": -22.24,
+      "total_generation_mva": 196.52,
+      "total_net_p_mw": 0.0,
+      "total_net_q_mvar": 0.0,
+      "total_net_s_mva": 0.0,
+      "inter_area_p_mw": 0.0,
+      "inter_area_q_mvar": 0.0,
+      "total_load_mw": 189.0,
+      "total_load_mvar": 69.0,
+      "total_load_mva": 201.2,
+      "load_pnom_mw": 189.0,
+      "load_qnom_mvar": 69.0,
+      "load_snom_mva": 201.2,
+      "load_pdiff_mw": 0.0,
+      "load_qdiff_mvar": -0.0,
+      "mot_p_mw": 0.0,
+      "mot_q_mvar": 0.0,
+      "mot_s_mva": 0.0,
+      "total_loss_mvar": -91.24,
+      "loss_qnld_mvar": -144.36,
+      "compr_q_mvar": 0.0,
+      "comp_q_mvar": 0.0,
+      "installed_capacity_mw": 519.5,
+      "spinning_reserve_mw": 324.24,
+      "gencos": 0.99,
+      "loadcos": 0.94,
+      "motcos": 0.0,
+      "is_live_pf": true,
+      "details": "Voltage Range: 1.016 - 1.041 p.u., Max Line Load: 26.1%"
+    },
+    {
+      "code": "LF-03",
+      "category": "Load Flow",
+      "name": "Load Flow - Without SMR (Peak Load)",
+      "with_smr": false,
+      "load_factor": 1.0,
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "bus_voltages_pu": {
+        "Bus 1": 1.0399999618530273,
+        "Bus 2": 1.0249999864720114,
+        "Bus 3": 1.0385035010091284,
+        "Bus 4": 1.0309115006454124,
+        "Bus 5": 1.002764060884111,
+        "Bus 6": 1.0200072773386732,
+        "Bus 7": 1.027871241709478,
+        "Bus 8": 1.0189546673820082,
+        "Bus 9": 1.038503501008977
+      },
+      "line_loadings_pct": {
+        "Line 4-5": 19.788286956469136,
+        "Line 4-6": 20.20837582326671,
+        "Line 5-7": 13.934423146445042,
+        "Line 6-9": 7.140108633398684,
+        "Line 7-8": 26.786669677438667,
+        "Line 8-9": 8.064345178757035
+      },
+      "generators": {
+        "Gen Azriel (SMR)": {
+          "p_mw": 85.0,
+          "q_mvar": -10.899999618530273
+        },
+        "Gen Mila": {
+          "p_mw": 155.62845254263092,
+          "q_mvar": 22.927157335976876
+        },
+        "Gen Petra": {
+          "p_mw": 163.00009681315962,
+          "q_mvar": 3.1903196607135613
+        }
+      },
+      "min_voltage_pu": 1.0028,
+      "max_voltage_pu": 1.04,
+      "max_line_loading_pct": 26.8,
+      "total_loss_mw": 3.63,
+      "scenario": "Load Flow - Without SMR (Peak Load)",
+      "project_name": "Nine-bus System",
+      "bus_powers": {
+        "Bus 1": {
+          "p_mw": 155.63,
+          "q_mvar": 22.93,
+          "p_load_mw": 0.0,
+          "q_load_mvar": 0.0,
+          "p_gen_mw": 155.63,
+          "q_gen_mvar": 22.93
+        },
+        "Bus 2": {
+          "p_mw": 163.0,
+          "q_mvar": 3.19,
+          "p_load_mw": 0.0,
+          "q_load_mvar": 0.0,
+          "p_gen_mw": 163.0,
+          "q_gen_mvar": 3.19
+        },
+        "Bus 3": {
+          "p_mw": 85.0,
+          "q_mvar": 10.9,
+          "p_load_mw": 0.0,
+          "q_load_mvar": 0.0,
+          "p_gen_mw": 85.0,
+          "q_gen_mvar": 10.9
+        },
+        "Bus 4": {
+          "p_mw": 0.0,
+          "q_mvar": 0.0,
+          "p_load_mw": 0.0,
+          "q_load_mvar": 0.0,
+          "p_gen_mw": 0.0,
+          "q_gen_mvar": 0.0
+        },
+        "Bus 5": {
+          "p_mw": 125.0,
+          "q_mvar": 50.0,
+          "p_load_mw": 125.0,
+          "q_load_mvar": 50.0,
+          "p_gen_mw": 0.0,
+          "q_gen_mvar": 0.0
+        },
+        "Bus 6": {
+          "p_mw": 90.0,
+          "q_mvar": 30.0,
+          "p_load_mw": 90.0,
+          "q_load_mvar": 30.0,
+          "p_gen_mw": 0.0,
+          "q_gen_mvar": 0.0
+        },
+        "Bus 7": {
+          "p_mw": 0.0,
+          "q_mvar": 0.0,
+          "p_load_mw": 0.0,
+          "q_load_mvar": 0.0,
+          "p_gen_mw": 0.0,
+          "q_gen_mvar": 0.0
+        },
+        "Bus 8": {
+          "p_mw": 100.0,
+          "q_mvar": 35.0,
+          "p_load_mw": 100.0,
+          "q_load_mvar": 35.0,
+          "p_gen_mw": 0.0,
+          "q_gen_mvar": 0.0
+        },
+        "Bus 9": {
+          "p_mw": 0.0,
+          "q_mvar": 0.0,
+          "p_load_mw": 0.0,
+          "q_load_mvar": 0.0,
+          "p_gen_mw": 0.0,
+          "q_gen_mvar": 0.0
+        }
+      },
+      "loads": {
+        "Beban Azriel": {
+          "p_mw": 100.0,
+          "q_mvar": 35.0,
+          "bus": "Bus 8"
+        },
+        "Beban Mila": {
+          "p_mw": 125.0,
+          "q_mvar": 50.0,
+          "bus": "Bus 5"
+        },
+        "Beban Petra": {
+          "p_mw": 90.0,
+          "q_mvar": 30.0,
+          "bus": "Bus 6"
+        }
+      },
+      "total_generation_mw": 318.63,
+      "total_generation_mvar": 26.12,
+      "total_generation_mva": 319.7,
+      "total_net_p_mw": 0.0,
+      "total_net_q_mvar": 0.0,
+      "total_net_s_mva": 0.0,
+      "inter_area_p_mw": 0.0,
+      "inter_area_q_mvar": 0.0,
+      "total_load_mw": 315.0,
+      "total_load_mvar": 115.0,
+      "total_load_mva": 335.34,
+      "load_pnom_mw": 315.0,
+      "load_qnom_mvar": 115.0,
+      "load_snom_mva": 335.34,
+      "load_pdiff_mw": 0.0,
+      "load_qdiff_mvar": 0.0,
+      "mot_p_mw": 0.0,
+      "mot_q_mvar": 0.0,
+      "mot_s_mva": 0.0,
+      "total_loss_mvar": -88.88,
+      "loss_qnld_mvar": -142.02,
+      "compr_q_mvar": 0.0,
+      "comp_q_mvar": 0.0,
+      "installed_capacity_mw": 410.7,
+      "spinning_reserve_mw": 92.07,
+      "gencos": 1.0,
+      "loadcos": 0.94,
+      "motcos": 0.0,
+      "is_live_pf": true,
+      "details": "Voltage Range: 1.003 - 1.040 p.u., Max Line Load: 26.8%"
+    },
+    {
+      "code": "LF-04",
+      "category": "Load Flow",
+      "name": "Load Flow - Without SMR (Low Load)",
+      "with_smr": false,
+      "load_factor": 0.6,
+      "status": "NON-COMPLIANT",
+      "score_pct": 50.0,
+      "failure_reason": "Overvoltage Violation: Bus 'Bus 3' voltage rose to 1.078 p.u. (Max Limit: 1.05 p.u.)",
+      "bus_voltages_pu": {
+        "Bus 1": 1.0399999618530273,
+        "Bus 2": 1.0249999938440515,
+        "Bus 3": 1.0778818202447673,
+        "Bus 4": 1.0497812801626498,
+        "Bus 5": 1.0371731649634024,
+        "Bus 6": 1.0589467963542079,
+        "Bus 7": 1.0485190507808,
+        "Bus 8": 1.0562368964385689,
+        "Bus 9": 1.0778818202446145
+      },
+      "line_loadings_pct": {
+        "Line 4-5": 5.976125049495488,
+        "Line 4-6": 8.22266481778528,
+        "Line 5-7": 18.084251497884914,
+        "Line 6-9": 9.021286777657307,
+        "Line 7-8": 22.545785702596447,
+        "Line 8-9": 11.307822762830378
+      },
+      "generators": {
+        "Gen Azriel (SMR)": {
+          "p_mw": 85.0,
+          "q_mvar": -10.899999618530273
+        },
+        "Gen Mila": {
+          "p_mw": 28.820696610004404,
+          "q_mvar": -17.441587499715975
+        },
+        "Gen Petra": {
+          "p_mw": 163.00000761978689,
+          "q_mvar": -30.8283476477531
+        }
+      },
+      "min_voltage_pu": 1.025,
+      "max_voltage_pu": 1.0779,
+      "max_line_loading_pct": 22.5,
+      "total_loss_mw": 2.82,
+      "scenario": "Load Flow - Without SMR (Low Load)",
+      "project_name": "Nine-bus System",
+      "bus_powers": {
+        "Bus 1": {
+          "p_mw": 28.82,
+          "q_mvar": 17.44,
+          "p_load_mw": 0.0,
+          "q_load_mvar": 0.0,
+          "p_gen_mw": 28.82,
+          "q_gen_mvar": 17.44
+        },
+        "Bus 2": {
+          "p_mw": 163.0,
+          "q_mvar": 30.83,
+          "p_load_mw": 0.0,
+          "q_load_mvar": 0.0,
+          "p_gen_mw": 163.0,
+          "q_gen_mvar": 30.83
+        },
+        "Bus 3": {
+          "p_mw": 85.0,
+          "q_mvar": 10.9,
+          "p_load_mw": 0.0,
+          "q_load_mvar": 0.0,
+          "p_gen_mw": 85.0,
+          "q_gen_mvar": 10.9
+        },
+        "Bus 4": {
+          "p_mw": 0.0,
+          "q_mvar": 0.0,
+          "p_load_mw": 0.0,
+          "q_load_mvar": 0.0,
+          "p_gen_mw": 0.0,
+          "q_gen_mvar": 0.0
+        },
+        "Bus 5": {
+          "p_mw": 75.0,
+          "q_mvar": 30.0,
+          "p_load_mw": 75.0,
+          "q_load_mvar": 30.0,
+          "p_gen_mw": 0.0,
+          "q_gen_mvar": 0.0
+        },
+        "Bus 6": {
+          "p_mw": 54.0,
+          "q_mvar": 18.0,
+          "p_load_mw": 54.0,
+          "q_load_mvar": 18.0,
+          "p_gen_mw": 0.0,
+          "q_gen_mvar": 0.0
+        },
+        "Bus 7": {
+          "p_mw": 0.0,
+          "q_mvar": 0.0,
+          "p_load_mw": 0.0,
+          "q_load_mvar": 0.0,
+          "p_gen_mw": 0.0,
+          "q_gen_mvar": 0.0
+        },
+        "Bus 8": {
+          "p_mw": 60.0,
+          "q_mvar": 21.0,
+          "p_load_mw": 60.0,
+          "q_load_mvar": 21.0,
+          "p_gen_mw": 0.0,
+          "q_gen_mvar": 0.0
+        },
+        "Bus 9": {
+          "p_mw": 0.0,
+          "q_mvar": 0.0,
+          "p_load_mw": 0.0,
+          "q_load_mvar": 0.0,
+          "p_gen_mw": 0.0,
+          "q_gen_mvar": 0.0
+        }
+      },
+      "loads": {
+        "Beban Azriel": {
+          "p_mw": 60.0,
+          "q_mvar": 21.0,
+          "bus": "Bus 8"
+        },
+        "Beban Mila": {
+          "p_mw": 75.0,
+          "q_mvar": 30.0,
+          "bus": "Bus 5"
+        },
+        "Beban Petra": {
+          "p_mw": 54.0,
+          "q_mvar": 18.0,
+          "bus": "Bus 6"
+        }
+      },
+      "total_generation_mw": 191.82,
+      "total_generation_mvar": -48.27,
+      "total_generation_mva": 197.8,
+      "total_net_p_mw": 0.0,
+      "total_net_q_mvar": 0.0,
+      "total_net_s_mva": 0.0,
+      "inter_area_p_mw": 0.0,
+      "inter_area_q_mvar": 0.0,
+      "total_load_mw": 189.0,
+      "total_load_mvar": 69.0,
+      "total_load_mva": 201.2,
+      "load_pnom_mw": 189.0,
+      "load_qnom_mvar": 69.0,
+      "load_snom_mva": 201.2,
+      "load_pdiff_mw": 0.0,
+      "load_qdiff_mvar": -0.0,
+      "mot_p_mw": 0.0,
+      "mot_q_mvar": 0.0,
+      "mot_s_mva": 0.0,
+      "total_loss_mvar": -117.27,
+      "loss_qnld_mvar": -151.18,
+      "compr_q_mvar": 0.0,
+      "comp_q_mvar": 0.0,
+      "installed_capacity_mw": 410.7,
+      "spinning_reserve_mw": 218.88,
+      "gencos": 0.97,
+      "loadcos": 0.94,
+      "motcos": 0.0,
+      "is_live_pf": true,
+      "details": "Voltage Range: 1.025 - 1.078 p.u., Max Line Load: 22.5%"
+    },
+    {
+      "code": "SC-01",
+      "category": "Short Circuit",
+      "name": "Short Circuit - With SMR (Peak Load)",
+      "with_smr": true,
+      "load_factor": 1.0,
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "pcc_bus": "Bus 3",
+      "short_circuit_power_mva": 1156.02,
+      "short_circuit_current_ka": 48.36,
+      "peak_current_ka": 125.58,
+      "breaking_current_ka": 40.77,
+      "thermal_current_ka": 49.48,
+      "rx_ratio": 0.0,
+      "phi_deg": 0.0,
+      "scpr_ratio": 13.6,
+      "is_live_pf": true,
+      "details": "Fault at Bus 'Bus 3': S\"k=1156.0 MVA, I\"k=48.36 kA, ip=125.58 kA, Ib=40.77 kA, SCR=13.60"
+    },
+    {
+      "code": "SC-02",
+      "category": "Short Circuit",
+      "name": "Short Circuit - With SMR (Low Load)",
+      "with_smr": true,
+      "load_factor": 0.6,
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "pcc_bus": "Bus 3",
+      "short_circuit_power_mva": 1156.02,
+      "short_circuit_current_ka": 48.36,
+      "peak_current_ka": 125.58,
+      "breaking_current_ka": 40.77,
+      "thermal_current_ka": 49.48,
+      "rx_ratio": 0.0,
+      "phi_deg": 0.0,
+      "scpr_ratio": 13.6,
+      "is_live_pf": true,
+      "details": "Fault at Bus 'Bus 3': S\"k=1156.0 MVA, I\"k=48.36 kA, ip=125.58 kA, Ib=40.77 kA, SCR=13.60"
+    },
+    {
+      "code": "SC-03",
+      "category": "Short Circuit",
+      "name": "Short Circuit - Without SMR (Peak Load)",
+      "with_smr": false,
+      "load_factor": 1.0,
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "pcc_bus": "Bus 3",
+      "short_circuit_power_mva": 450.36,
+      "short_circuit_current_ka": 18.84,
+      "peak_current_ka": 47.79,
+      "breaking_current_ka": 18.84,
+      "thermal_current_ka": 19.18,
+      "rx_ratio": 0.0,
+      "phi_deg": 0.0,
+      "scpr_ratio": 5.3,
+      "is_live_pf": true,
+      "details": "Fault at Bus 'Bus 3': S\"k=450.4 MVA, I\"k=18.84 kA, ip=47.79 kA, Ib=18.84 kA, SCR=5.30"
+    },
+    {
+      "code": "SC-04",
+      "category": "Short Circuit",
+      "name": "Short Circuit - Without SMR (Low Load)",
+      "with_smr": false,
+      "load_factor": 0.6,
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "pcc_bus": "Bus 3",
+      "short_circuit_power_mva": 450.36,
+      "short_circuit_current_ka": 18.84,
+      "peak_current_ka": 47.79,
+      "breaking_current_ka": 18.84,
+      "thermal_current_ka": 19.18,
+      "rx_ratio": 0.0,
+      "phi_deg": 0.0,
+      "scpr_ratio": 5.3,
+      "is_live_pf": true,
+      "details": "Fault at Bus 'Bus 3': S\"k=450.4 MVA, I\"k=18.84 kA, ip=47.79 kA, Ib=18.84 kA, SCR=5.30"
+    },
+    {
+      "code": "DYN-01",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of SMR (Peak Load)",
+      "with_smr": true,
+      "load_factor": 1.0,
+      "event_type": "SMR Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.15,
+      "details": "Freq Nadir: 49.15 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-02",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of SMR (Low Load)",
+      "with_smr": true,
+      "load_factor": 0.6,
+      "event_type": "SMR Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.15,
+      "details": "Freq Nadir: 49.15 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-03",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Biggest Load (Beban Mila) - With SMR (Peak)",
+      "with_smr": true,
+      "load_factor": 1.0,
+      "event_type": "Load Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 50.55,
+      "details": "Freq Nadir: 50.55 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-04",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Biggest Load (Beban Mila) - With SMR (Low)",
+      "with_smr": true,
+      "load_factor": 0.6,
+      "event_type": "Load Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 50.55,
+      "details": "Freq Nadir: 50.55 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-05",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Biggest Load (Beban Mila) - Without SMR (Peak)",
+      "with_smr": false,
+      "load_factor": 1.0,
+      "event_type": "Load Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 50.55,
+      "details": "Freq Nadir: 50.55 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-06",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Biggest Load (Beban Mila) - Without SMR (Low)",
+      "with_smr": false,
+      "load_factor": 0.6,
+      "event_type": "Load Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 50.55,
+      "details": "Freq Nadir: 50.55 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-07",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Transmission Line (Line 5-7) - With SMR (Peak)",
+      "with_smr": true,
+      "load_factor": 1.0,
+      "event_type": "Line Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.6,
+      "details": "Freq Nadir: 49.60 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-08",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Transmission Line (Line 5-7) - With SMR (Low)",
+      "with_smr": true,
+      "load_factor": 0.6,
+      "event_type": "Line Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.6,
+      "details": "Freq Nadir: 49.60 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-09",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Transmission Line (Line 5-7) - Without SMR (Peak)",
+      "with_smr": false,
+      "load_factor": 1.0,
+      "event_type": "Line Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.6,
+      "details": "Freq Nadir: 49.60 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-10",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Transmission Line (Line 5-7) - Without SMR (Low)",
+      "with_smr": false,
+      "load_factor": 0.6,
+      "event_type": "Line Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.6,
+      "details": "Freq Nadir: 49.60 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-11",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Largest Non-SMR Gen (Gen Petra) - With SMR (Peak)",
+      "with_smr": true,
+      "load_factor": 1.0,
+      "event_type": "Gen Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.35,
+      "details": "Freq Nadir: 49.35 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-12",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Largest Non-SMR Gen (Gen Petra) - With SMR (Low)",
+      "with_smr": true,
+      "load_factor": 0.6,
+      "event_type": "Gen Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.35,
+      "details": "Freq Nadir: 49.35 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-13",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Largest Non-SMR Gen (Gen Petra) - Without SMR (Peak)",
+      "with_smr": false,
+      "load_factor": 1.0,
+      "event_type": "Gen Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.35,
+      "details": "Freq Nadir: 49.35 Hz, Clearing: 120ms"
+    },
+    {
+      "code": "DYN-14",
+      "category": "Dynamic RMS",
+      "name": "Disconnection of Largest Non-SMR Gen (Gen Petra) - Without SMR (Low)",
+      "with_smr": false,
+      "load_factor": 0.6,
+      "event_type": "Gen Trip",
+      "status": "COMPLIANT",
+      "score_pct": 100.0,
+      "failure_reason": "All ESDM Grid Code criteria satisfied.",
+      "freq_nadir_hz": 49.35,
+      "details": "Freq Nadir: 49.35 Hz, Clearing: 120ms"
+    }
+  ]
+}
