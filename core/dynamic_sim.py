@@ -497,18 +497,47 @@ class DynamicSimEngine:
         except Exception:
             pass
 
+    def _get_line_terminal_buses(self, elem: Any) -> List[Any]:
+        """Returns the grid-connected terminal bus objects (ElmTerm) at both ends (bus1, bus2) of a line/branch."""
+        if not elem:
+            return []
+        buses = []
+        seen_names = set()
+        for b_attr in ["bus1", "bus2", "bushv", "buslv"]:
+            try:
+                cub = safe_get_attr(elem, b_attr, None)
+                if not cub:
+                    continue
+                cterm = getattr(cub, "cterm", None) or safe_get_attr(cub, "cterm", None)
+                if not cterm and hasattr(cub, "GetParent"):
+                    cterm = cub.GetParent()
+                if cterm and hasattr(cterm, "GetClassName") and "ElmTerm" in cterm.GetClassName():
+                    b_name = safe_get_attr(cterm, "loc_name", "")
+                    if b_name and b_name not in seen_names:
+                        seen_names.add(b_name)
+                        buses.append(cterm)
+            except Exception:
+                pass
+        if not buses:
+            b_single = self._get_connected_bus(elem)
+            if b_single:
+                buses.append(b_single)
+        return buses
+
     def _create_contingency_events(
         self,
         app,
         evt_folder,
         event_type: str,
         target_element_name: Optional[str],
-        fault_clearing_time_ms: float = 120.0
+        fault_clearing_time_ms: float = 120.0,
+        target_element_2_name: Optional[str] = None
     ) -> Tuple[Optional[Any], str]:
         """
-        Creates native PowerFactory Event objects inside IntEvt for N-1 contingency trips.
-        Returns (target_element_obj, description).
+        Creates native PowerFactory Event objects inside IntEvt for N-1 and N-2 contingency trips.
+        Returns (target_element_obj, description). Also stores self._last_target_elem_2 for N-2 trips.
         """
+        self._last_target_elem_2 = None
         if not evt_folder:
             return None, "No IntEvt Folder"
 
@@ -554,68 +583,95 @@ class DynamicSimEngine:
             logger.info(f"Created PowerFactory Trip Switch Event for load '{load_name}' at t = {t_fault}s")
             return load_obj, f"Trip Load '{load_name}' at t = {t_fault}s"
 
-        # 3. TRANSMISSION LINE TRIP (Fault + Clearance + Disconnection)
+        # 3. TRANSMISSION LINE TRIP (N-1 or N-2 Fault + Clearance + Disconnection)
         else:
-            line_obj = self._find_element(app, "ElmLne", target_element_name)
+            line_1_str = target_element_name
+            line_2_str = target_element_2_name
+            if not line_2_str and target_element_name and "|" in target_element_name:
+                parts = [p.strip() for p in target_element_name.split("|") if p.strip()]
+                if len(parts) >= 2:
+                    line_1_str, line_2_str = parts[0], parts[1]
+
+            line_obj = self._find_element(app, "ElmLne", line_1_str)
             if not line_obj:
-                return None, f"Target line '{target_element_name}' not found"
+                return None, f"Target line '{line_1_str}' not found"
 
             line_name = safe_get_attr(line_obj, "loc_name", "Line")
+            lines_to_trip = [line_obj]
 
-            # Step A: 3-Phase Short Circuit at t = 1.0s
-            try:
-                evt_shc = evt_folder.CreateObject("EvtShc", f"Fault on {line_name}")
-                if evt_shc:
-                    evt_shc.SetAttribute("time", t_fault)
-                    for a_name in ["p_target", "partobj", "p_obj", "target", "p_elem", "element"]:
-                        try:
-                            evt_shc.SetAttribute(a_name, line_obj)
+            is_n2 = "n-2" in evt_lower or "n2" in evt_lower or bool(line_2_str)
+            if is_n2:
+                line_obj_2 = self._find_element(app, "ElmLne", line_2_str) if line_2_str else None
+                if not line_obj_2 or safe_get_attr(line_obj_2, "loc_name", "") == line_name:
+                    all_lines = app.GetCalcRelevantObjects("*.ElmLne") or []
+                    for cand_l in all_lines:
+                        if safe_get_attr(cand_l, "loc_name", "") != line_name and safe_get_attr(cand_l, "outserv", 0) == 0:
+                            line_obj_2 = cand_l
                             break
-                        except Exception:
-                            pass
-                    for opt in ["iopt_shc", "iopt_type"]:
-                        try:
-                            evt_shc.SetAttribute(opt, 0)  # 3-Phase Short Circuit
-                        except Exception:
-                            pass
-                    for loc_attr in ["shcLocation", "f_loc"]:
-                        try:
-                            evt_shc.SetAttribute(loc_attr, 50.0)
-                        except Exception:
-                            pass
-            except Exception as ex:
-                logger.debug(f"EvtShc creation note: {ex}")
+                if line_obj_2 and safe_get_attr(line_obj_2, "loc_name", "") != line_name:
+                    self._last_target_elem_2 = line_obj_2
+                    lines_to_trip.append(line_obj_2)
 
-            # Step B: Clear Fault at t = 1.0 + t_clear (120ms)
-            try:
-                evt_clr = evt_folder.CreateObject("EvtShc", f"Clear Fault {line_name}")
-                if evt_clr:
-                    evt_clr.SetAttribute("time", t_end)
-                    for a_name in ["p_target", "partobj", "p_obj", "target", "p_elem", "element"]:
-                        try:
-                            evt_clr.SetAttribute(a_name, line_obj)
-                            break
-                        except Exception:
-                            pass
-                    for opt in ["iopt_shc", "iopt_type"]:
-                        try:
-                            evt_clr.SetAttribute(opt, 4)  # 4 = Clear fault
-                        except Exception:
-                            pass
-            except Exception as ex:
-                logger.debug(f"EvtShc clear note: {ex}")
+            tripped_names = []
+            for idx_l, l_target in enumerate(lines_to_trip):
+                l_nm = safe_get_attr(l_target, "loc_name", f"Line_{idx_l+1}")
+                tripped_names.append(l_nm)
 
-            # Step C: Disconnect Transmission Line at t = 1.0 + t_clear
-            try:
-                evt_sw = evt_folder.CreateObject("EvtSwitch", f"Trip {line_name}")
-                if evt_sw:
-                    evt_sw.SetAttribute("time", t_end)
-                    self._bind_switch_event_target(evt_sw, line_obj)
-            except Exception as ex:
-                logger.debug(f"Line trip switch note: {ex}")
+                # Step A: 3-Phase Short Circuit at t = 1.0s
+                try:
+                    evt_shc = evt_folder.CreateObject("EvtShc", f"Fault on {l_nm}")
+                    if evt_shc:
+                        evt_shc.SetAttribute("time", t_fault)
+                        for a_name in ["p_target", "partobj", "p_obj", "target", "p_elem", "element"]:
+                            try:
+                                evt_shc.SetAttribute(a_name, l_target)
+                                break
+                            except Exception:
+                                pass
+                        for opt in ["iopt_shc", "iopt_type"]:
+                            try:
+                                evt_shc.SetAttribute(opt, 0)  # 3-Phase Short Circuit
+                            except Exception:
+                                pass
+                        for loc_attr in ["shcLocation", "f_loc"]:
+                            try:
+                                evt_shc.SetAttribute(loc_attr, 50.0)
+                            except Exception:
+                                pass
+                except Exception as ex:
+                    logger.debug(f"EvtShc creation note ({l_nm}): {ex}")
 
-            logger.info(f"Created PowerFactory Line Fault & Trip for '{line_name}' (Fault: {t_fault}s, Clearing: {t_end}s)")
-            return line_obj, f"Fault & Trip Line '{line_name}' (Fault: {t_fault}s, Clearing: {t_end}s)"
+                # Step B: Clear Fault at t = 1.0 + t_clear (120ms)
+                try:
+                    evt_clr = evt_folder.CreateObject("EvtShc", f"Clear Fault {l_nm}")
+                    if evt_clr:
+                        evt_clr.SetAttribute("time", t_end)
+                        for a_name in ["p_target", "partobj", "p_obj", "target", "p_elem", "element"]:
+                            try:
+                                evt_clr.SetAttribute(a_name, l_target)
+                                break
+                            except Exception:
+                                pass
+                        for opt in ["iopt_shc", "iopt_type"]:
+                            try:
+                                evt_clr.SetAttribute(opt, 4)  # 4 = Clear fault
+                            except Exception:
+                                pass
+                except Exception as ex:
+                    logger.debug(f"EvtShc clear note ({l_nm}): {ex}")
+
+                # Step C: Disconnect Transmission Line at t = 1.0 + t_clear
+                try:
+                    evt_sw = evt_folder.CreateObject("EvtSwitch", f"Trip {l_nm}")
+                    if evt_sw:
+                        evt_sw.SetAttribute("time", t_end)
+                        self._bind_switch_event_target(evt_sw, l_target)
+                except Exception as ex:
+                    logger.debug(f"Line trip switch note ({l_nm}): {ex}")
+
+            joined_names = " & ".join(tripped_names)
+            logger.info(f"Created PowerFactory Line Fault & Trip for '{joined_names}' (Fault: {t_fault}s, Clearing: {t_end}s)")
+            return line_obj, f"Fault & Trip Line(s) '{joined_names}' (Fault: {t_fault}s, Clearing: {t_end}s)"
 
     def _get_nominal_freq_hz(self, app) -> float:
         """Reads the network nominal frequency (frnom in Hz, e.g. 50.0 or 60.0) directly from PowerFactory ElmNet."""
@@ -646,13 +702,21 @@ class DynamicSimEngine:
             pass
         return 150.0
 
-    def _get_bus_connected_elements(self, app, monitored_bus, exclude_elem=None) -> List[Any]:
+    def _get_bus_connected_elements(self, app, monitored_bus, exclude_elem=None, exclude_elem_2=None) -> List[Any]:
         """Returns elements connected directly to monitored_bus (healthy branches first) so P(t) and Q(t) can be measured at monitored_bus."""
         if not monitored_bus:
             return []
         connected_healthy_branches = []
         connected_other = []
-        excl_name = safe_get_attr(exclude_elem, "loc_name", "") if exclude_elem else ""
+        excl_names = set()
+        if exclude_elem:
+            nm1 = safe_get_attr(exclude_elem, "loc_name", "")
+            if nm1:
+                excl_names.add(nm1)
+        if exclude_elem_2:
+            nm2 = safe_get_attr(exclude_elem_2, "loc_name", "")
+            if nm2:
+                excl_names.add(nm2)
         bus_name = safe_get_attr(monitored_bus, "loc_name", "")
 
         seen_names = set()
@@ -671,7 +735,7 @@ class DynamicSimEngine:
                     continue
                 seen_names.add(o_name)
                 c_cls = obj.GetClassName() if hasattr(obj, "GetClassName") else ""
-                if o_name == excl_name:
+                if o_name in excl_names:
                     connected_other.append(obj)
                 elif "ElmLne" in c_cls or "ElmTr2" in c_cls:
                     connected_healthy_branches.append(obj)
@@ -696,7 +760,7 @@ class DynamicSimEngine:
                             if cterm and safe_get_attr(cterm, "loc_name", "") == bus_name:
                                 seen_names.add(o_name)
                                 c_cls = obj.GetClassName() if hasattr(obj, "GetClassName") else ""
-                                if o_name == excl_name:
+                                if o_name in excl_names:
                                     connected_other.append(obj)
                                 elif "ElmLne" in c_cls or "ElmTr2" in c_cls:
                                     connected_healthy_branches.append(obj)
@@ -1454,20 +1518,21 @@ class DynamicSimEngine:
             f_nadir = float(np.min(freq_vec))
             v_min = float(np.min(volt_vec))
         else:
-            # Line Trip (N-1): Severe voltage dip during fault, mild frequency transient
-            dip_depth = 0.40
+            # Line Trip (N-1 or N-2): Severe voltage dip during fault, mild/moderate frequency transient
+            is_n2_sim = "n-2" in evt_lower or "n2" in evt_lower or (target_element_name and "|" in target_element_name)
+            dip_depth = 0.52 if is_n2_sim else 0.40
             freq_vec[mask_fault] = nominal_freq_hz - dip_depth * np.sin(np.pi * (t_vec[mask_fault] - fault_start) / clearing_sec)
             freq_vec[mask_rec] = (nominal_freq_hz - dip_depth) + dip_depth * (1.0 - np.exp(-3.0 * (t_vec[mask_rec] - fault_end)))
             freq_vec[t_vec > fault_end + 2.5] = nominal_freq_hz
-            volt_vec[mask_fault] = 0.65 + 0.05 * np.random.rand(np.sum(mask_fault))
-            volt_vec[mask_rec] = 0.93 + 0.06 * (1.0 - np.exp(-3.0 * (t_vec[mask_rec] - fault_end)))
+            volt_vec[mask_fault] = (0.55 if is_n2_sim else 0.65) + 0.05 * np.random.rand(np.sum(mask_fault))
+            volt_vec[mask_rec] = (0.91 if is_n2_sim else 0.93) + 0.06 * (1.0 - np.exp(-3.0 * (t_vec[mask_rec] - fault_end)))
             p_vec[t_vec >= fault_start] = p_base * np.exp(-1.8 * (t_vec[t_vec >= fault_start] - fault_start))
             f_nadir = float(np.min(freq_vec))
             v_min = float(np.min(volt_vec))
 
         volt_kv_vec = np.round(volt_vec * float(nominal_voltage_kv), 3)
 
-        return {
+        out_payload = {
             "event_type": event_type,
             "fault_clearing_time_ms": fault_clearing_time_ms,
             "sim_duration_sec": sim_duration_sec,
@@ -1488,6 +1553,27 @@ class DynamicSimEngine:
             "is_live_pf": False
         }
 
+        if ("n-2" in evt_lower or "n2" in evt_lower) and target_element_name and "|" in target_element_name:
+            parts = [p.strip() for p in target_element_name.split("|") if p.strip()]
+            if len(parts) >= 2 and parts[0] != parts[1]:
+                bus_1_lbl = f"{parts[0]} Bus"
+                bus_2_lbl = f"{parts[1]} Bus"
+                out_payload["monitored_bus_name"] = bus_1_lbl
+                out_payload["pq_measured_element"] = parts[0]
+                out_payload["monitored_bus_2_name"] = bus_2_lbl
+                out_payload["pq_measured_element_2"] = parts[1]
+                out_payload["nominal_voltage_2_kv"] = float(nominal_voltage_kv)
+                freq_2_vec = np.clip(freq_vec - 0.04 * np.sin(np.pi * np.clip((t_vec - 1.0) / 1.5, 0, 1)), 47.0, 52.0)
+                volt_2_pu = np.clip(volt_vec * 0.985, 0.1, 1.1)
+                volt_2_kv = np.round(volt_2_pu * float(nominal_voltage_kv), 3)
+                out_payload["frequency_2_hz"] = np.round(freq_2_vec, 3).tolist()
+                out_payload["voltage_2_pu"] = np.round(volt_2_pu, 4).tolist()
+                out_payload["voltage_2_kv"] = volt_2_kv.tolist()
+                out_payload["active_power_2_mw"] = np.round(p_vec * 0.85, 2).tolist()
+                out_payload["reactive_power_2_mvar"] = np.round(q_vec * 0.85, 2).tolist()
+
+        return out_payload
+
     def run_rms_simulation(
         self,
         event_type: str = "SMR Trip",
@@ -1498,15 +1584,16 @@ class DynamicSimEngine:
         scenario_name: Optional[str] = None,
         with_smr: bool = True,
         load_factor: float = 1.0,
-        smr_name: Optional[str] = None
+        smr_name: Optional[str] = None,
+        target_element_2_name: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Executes native PowerFactory ComInc & ComSim time-domain simulation safely:
         1. Activates Peak vs Low load operational scenario and applies generation dispatch.
-        2. Injects contingency trip events into IntEvt at t = 1.00s.
-        3. Configures ElmRes channel recording for rotor speed, frequency (Hz), PCC voltage (kV & p.u.), P, Q.
+        2. Injects contingency trip events into IntEvt at t = 1.00s (supports N-1 and N-2).
+        3. Configures ElmRes channel recording for rotor speed, frequency (Hz), bus voltage (kV & p.u.), P, Q.
         4. Runs native ComInc (Initial Conditions) and ComSim (Simulation).
-        5. Extracts genuine PowerFactory time-series data with zero hardcoded drift.
+        5. Extracts genuine PowerFactory time-series data (including dual-bus data for non-colocated N-2 line trips).
         """
         if self.connector and self.connector.is_connected and self.connector.app:
             app = self.connector.app
@@ -1538,19 +1625,54 @@ class DynamicSimEngine:
                 evt_folder,
                 event_type,
                 target_element_name,
-                fault_clearing_time_ms
+                fault_clearing_time_ms,
+                target_element_2_name=target_element_2_name
             )
+            target_elem_2 = getattr(self, "_last_target_elem_2", None)
 
             # 3. Setup Monitored Elements & ElmRes
-            # Resolve the bus directly connected to the tripped element
-            tripped_bus = self._get_connected_bus(target_elem)
+            # For N-2 Line Trip: check if target_elem and target_elem_2 share a common terminal bus.
+            # If they share a bus, monitor that common bus; if not, monitor both Bus 1 and Bus 2!
             pcc_bus = self._find_element(app, "ElmTerm", target_bus_name)
-            monitored_bus = tripped_bus or pcc_bus
+            monitored_bus = None
+            monitored_bus_2 = None
+
+            if target_elem_2 is not None:
+                terms_1 = self._get_line_terminal_buses(target_elem)
+                terms_2 = self._get_line_terminal_buses(target_elem_2)
+                names_2 = {safe_get_attr(b, "loc_name", ""): b for b in terms_2 if safe_get_attr(b, "loc_name", "")}
+                shared_bus = None
+                for b1 in terms_1:
+                    b1_nm = safe_get_attr(b1, "loc_name", "")
+                    if b1_nm and b1_nm in names_2:
+                        shared_bus = b1
+                        break
+                if shared_bus is not None:
+                    monitored_bus = shared_bus
+                    monitored_bus_2 = None
+                    logger.info(f"N-2 Lines share common bus '{safe_get_attr(shared_bus, 'loc_name', '')}'; monitoring shared bus.")
+                else:
+                    monitored_bus = self._get_connected_bus(target_elem) or pcc_bus
+                    monitored_bus_2 = self._get_connected_bus(target_elem_2)
+                    if monitored_bus and monitored_bus_2 and safe_get_attr(monitored_bus, "loc_name", "") == safe_get_attr(monitored_bus_2, "loc_name", ""):
+                        monitored_bus_2 = None
+                    elif monitored_bus_2:
+                        logger.info(
+                            f"N-2 Lines are on separate buses: monitoring both "
+                            f"Bus 1='{safe_get_attr(monitored_bus, 'loc_name', '')}' and "
+                            f"Bus 2='{safe_get_attr(monitored_bus_2, 'loc_name', '')}'."
+                        )
+            else:
+                tripped_bus = self._get_connected_bus(target_elem)
+                monitored_bus = tripped_bus or pcc_bus
+
             monitored_bus_name = safe_get_attr(monitored_bus, "loc_name", target_bus_name or "PCC Bus")
+            monitored_bus_2_name = safe_get_attr(monitored_bus_2, "loc_name", "") if monitored_bus_2 else None
 
             # Read nominal network frequency (frnom in Hz) and monitored bus nominal voltage (uknom in kV)
             nominal_freq_hz = self._get_nominal_freq_hz(app)
             nominal_voltage_kv = self._get_bus_nominal_kv(monitored_bus)
+            nominal_voltage_2_kv = self._get_bus_nominal_kv(monitored_bus_2) if monitored_bus_2 else nominal_voltage_kv
 
             target_gen = None
             if "smr" in event_type.lower() or "gen" in event_type.lower():
@@ -1559,10 +1681,18 @@ class DynamicSimEngine:
                 target_gen = self._find_element(app, "ElmSym", smr_name)
 
             # Register channels for monitored_bus (m:fehz, m:Ul, m:Pflow, m:Qflow), connected bus branches (exact cubicle side), and target_elem
-            bus_connected_elems = self._get_bus_connected_elements(app, monitored_bus, exclude_elem=target_elem)
+            bus_connected_elems = self._get_bus_connected_elements(app, monitored_bus, exclude_elem=target_elem, exclude_elem_2=target_elem_2)
             bus_connected_names = [safe_get_attr(e, "loc_name", "") for e in bus_connected_elems if e]
             monitored = [monitored_bus] + bus_connected_elems + [target_elem, target_gen]
             res_obj = self._setup_res_variables(app, monitored, monitored_bus=monitored_bus)
+
+            bus_2_connected_elems = []
+            bus_2_connected_names = []
+            if monitored_bus_2:
+                bus_2_connected_elems = self._get_bus_connected_elements(app, monitored_bus_2, exclude_elem=target_elem, exclude_elem_2=target_elem_2)
+                bus_2_connected_names = [safe_get_attr(e, "loc_name", "") for e in bus_2_connected_elems if e]
+                monitored_2 = [monitored_bus_2] + bus_2_connected_elems + [target_elem_2]
+                self._setup_res_variables(app, monitored_2, monitored_bus=monitored_bus_2)
 
             # 3c. Execute Load Flow (ComLdf) to establish steady-state operating point
             # ComInc REQUIRES a converged load flow to calculate valid initial conditions.
@@ -1651,7 +1781,8 @@ class DynamicSimEngine:
                         evt_folder,
                         event_type,
                         target_element_name,
-                        fault_clearing_time_ms
+                        fault_clearing_time_ms,
+                        target_element_2_name=target_element_2_name
                     )
 
                 # Stage B Recovery: If ComInc still fails, temporarily isolate uninitialized Composite/DSL controllers (ElmComp/ElmDsl)
@@ -1706,6 +1837,7 @@ class DynamicSimEngine:
 
             # 6. Extract Genuine Time-Series Results
             live_data = None
+            live_data_2 = None
             if res_obj:
                 t_gen_name = safe_get_attr(target_gen, "loc_name", None) if target_gen else None
                 m_bus_name = safe_get_attr(monitored_bus, "loc_name", None) if monitored_bus else None
@@ -1733,6 +1865,31 @@ class DynamicSimEngine:
                         bus_connected_elems=bus_connected_elems
                     )
 
+                if monitored_bus_2 and monitored_bus_2_name:
+                    t_elem_2_name = safe_get_attr(target_elem_2, "loc_name", None) if target_elem_2 else None
+                    scratch_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "scratch")
+                    persistent_copy_path = os.path.join(scratch_dir, "last_pf_rms_export.csv")
+                    if os.path.exists(persistent_copy_path) and os.path.getsize(persistent_copy_path) > 50:
+                        live_data_2 = self._parse_pf_exported_csv(
+                            persistent_copy_path,
+                            target_gen_name=t_gen_name,
+                            target_bus_name=monitored_bus_2_name,
+                            target_elem_name=t_elem_2_name,
+                            nominal_freq_hz=nominal_freq_hz,
+                            nominal_voltage_kv=nominal_voltage_2_kv,
+                            bus_connected_names=bus_2_connected_names
+                        )
+                    if not live_data_2:
+                        live_data_2 = self._extract_via_elmres_direct(
+                            res_obj,
+                            target_gen,
+                            monitored_bus_2,
+                            target_elem_2,
+                            nominal_freq_hz=nominal_freq_hz,
+                            nominal_voltage_kv=nominal_voltage_2_kv,
+                            bus_connected_elems=bus_2_connected_elems
+                        )
+
             # Clean up events so project remains clean
             self._clear_events(evt_folder)
 
@@ -1751,11 +1908,7 @@ class DynamicSimEngine:
                 v_min = float(np.min(v_vec))
                 v_min_kv = float(np.min(v_kv_vec))
 
-                logger.info(
-                    f"Returning genuine PowerFactory simulation data ({len(f_vec)} points, "
-                    f"f_nom={eff_nom_freq} Hz, V_nom={eff_nom_kv} kV) for '{event_type}'"
-                )
-                return {
+                ret_payload = {
                     "event_type": event_type,
                     "fault_clearing_time_ms": fault_clearing_time_ms,
                     "sim_duration_sec": sim_duration_sec,
@@ -1775,6 +1928,38 @@ class DynamicSimEngine:
                     "monitored_bus_name": monitored_bus_name,
                     "is_live_pf": True
                 }
+
+                if (
+                    live_data_2
+                    and monitored_bus_2_name
+                    and len(live_data_2.get("frequency_hz", [])) == len(f_vec)
+                    and len(live_data_2.get("voltage_pu", [])) == len(v_vec)
+                ):
+                    f2_vec = live_data_2["frequency_hz"]
+                    v2_vec = live_data_2["voltage_pu"]
+                    eff_nom_kv_2 = float(live_data_2.get("nominal_voltage_kv", nominal_voltage_2_kv))
+                    v2_kv_vec = live_data_2.get("voltage_kv") or [round(v * eff_nom_kv_2, 3) for v in v2_vec]
+                    ret_payload["monitored_bus_2_name"] = monitored_bus_2_name
+                    ret_payload["nominal_voltage_2_kv"] = eff_nom_kv_2
+                    ret_payload["frequency_2_hz"] = f2_vec
+                    ret_payload["voltage_2_pu"] = v2_vec
+                    ret_payload["voltage_2_kv"] = v2_kv_vec
+                    ret_payload["active_power_2_mw"] = live_data_2.get("active_power_mw", [])
+                    ret_payload["reactive_power_2_mvar"] = live_data_2.get("reactive_power_mvar", [])
+                    ret_payload["pq_measured_element_2"] = live_data_2.get("pq_measured_element") or monitored_bus_2_name
+                    # Evaluate compliance against worst-case of both buses
+                    f2_nadir = float(np.min(f2_vec))
+                    v2_min = float(np.min(v2_vec))
+                    v2_min_kv = float(np.min(v2_kv_vec))
+                    ret_payload["freq_nadir_hz"] = round(min(f_nadir, f2_nadir), 2)
+                    ret_payload["min_voltage_pu"] = round(min(v_min, v2_min), 3)
+                    ret_payload["min_voltage_kv"] = round(min(v_min_kv, v2_min_kv), 2)
+
+                logger.info(
+                    f"Returning genuine PowerFactory simulation data ({len(f_vec)} points, "
+                    f"f_nom={eff_nom_freq} Hz, V_nom={eff_nom_kv} kV) for '{event_type}'"
+                )
+                return ret_payload
 
         # Offline / Fallback when PowerFactory is disconnected or models lack dynamic controllers
         target_cap = 150.0

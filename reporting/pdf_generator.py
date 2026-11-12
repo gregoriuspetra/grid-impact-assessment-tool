@@ -49,20 +49,21 @@ class PDFReportGenerator:
 
         elements = []
 
+        # 1. Executive Summary
+        proj_name = assessment_data.get("project_name", assessment_data.get("active_project_name", "PowerFactory Active Grid Project"))
+        total_count = assessment_data.get("total_count", 26)
+        passed_count = assessment_data.get("passed_count", total_count)
+        failed_count = assessment_data.get("failed_count", 0)
+
         # Document Header
-        elements.append(Paragraph("22-SCENARIO GRID IMPACT ASSESSMENT REPORT", title_style))
+        elements.append(Paragraph(f"{total_count}-SCENARIO GRID IMPACT ASSESSMENT REPORT", title_style))
         elements.append(Paragraph("Collaboration between Universitas Gadjah Mada & PT. PLN (Persero)", subtitle_style))
         elements.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor('#0284C7'), spaceAfter=12))
 
-        # 1. Executive Summary
         elements.append(Paragraph("1. Executive Summary & Compliance Overview", heading_style))
-        proj_name = assessment_data.get("project_name", assessment_data.get("active_project_name", "PowerFactory Active Grid Project"))
-        passed_count = assessment_data.get("passed_count", 22)
-        total_count = assessment_data.get("total_count", 22)
-        failed_count = assessment_data.get("failed_count", 0)
 
         exec_text = (
-            f"This technical report presents the statutory 22-Scenario Grid Impact Assessment for grid model <b>{proj_name}</b> "
+            f"This technical report presents the statutory {total_count}-Scenario Grid Impact Assessment for grid model <b>{proj_name}</b> "
             f"evaluated against Indonesian Electricity Grid Code Regulations (<b>ESDM No. 20/2020</b>). "
             f"A total of <b>{total_count} scenarios</b> (covering Steady-State Load Flow, Short Circuit Stiffness, and RMS Dynamic Transient Stability) "
             f"were simulated in DIgSILENT PowerFactory. "
@@ -118,8 +119,8 @@ class PDFReportGenerator:
         elements.append(Paragraph(dyn_metrics_text, body_style))
         elements.append(Spacer(1, 10))
 
-        # 3. Master 22-Scenario Compliance Matrix Table
-        elements.append(Paragraph("3. Master 22-Scenario Compliance Matrix & Failure Rationales", heading_style))
+        # 3. Master Scenario Compliance Matrix Table
+        elements.append(Paragraph(f"3. Master {total_count}-Scenario Compliance Matrix & Failure Rationales", heading_style))
 
         scenarios = assessment_data.get("scenarios", [
             {"code": "LF-01", "category": "Load Flow", "name": "Load Flow - With SMR (Peak Load)", "status": "COMPLIANT", "failure_reason": "All ESDM Grid Code criteria satisfied."},

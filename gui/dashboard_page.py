@@ -713,7 +713,7 @@ class DashboardPage(QScrollArea):
 
             table.cellClicked.connect(self.on_table_row_clicked)
             mat_layout.addWidget(table)
-            tabs.addTab(tab_mat, "📋 Master 22-Scenario Compliance Matrix (Interactive)")
+            tabs.addTab(tab_mat, f"📋 Master {len(self.scenarios_db)}-Scenario Compliance Matrix (Interactive)")
 
             # TAB 2: LOAD FLOW HYBRID 4-SCENARIO DASHBOARD
             bg_col = '#1A202C' if self.is_dark else '#F8FAFC'
@@ -1178,7 +1178,9 @@ class DashboardPage(QScrollArea):
                 )
 
             dyn_scenarios = [sc for sc in self.scenarios_db if sc.get("category") == "Dynamic RMS"]
-            combo_dyn_select.addItem("📊 [OVERLAY] All 4 Primary Contingency Event Types", "OVERLAY")
+            has_n2_scen = any(sc.get("event_type") == "N-2 Line Trip" for sc in dyn_scenarios)
+            overlay_title_str = "📊 [OVERLAY] All 5 Primary Contingency Event Types" if has_n2_scen else "📊 [OVERLAY] All 4 Primary Contingency Event Types"
+            combo_dyn_select.addItem(overlay_title_str, "OVERLAY")
             for sc in dyn_scenarios:
                 combo_dyn_select.addItem(f"[{sc.get('code')}] {sc.get('name')}", sc.get('code'))
 
@@ -1203,6 +1205,7 @@ class DashboardPage(QScrollArea):
             gen_label_name = mapping.get("largest_non_smr_gen", "Largest Gen")
             load_label_name = mapping.get("biggest_load", "Biggest Load")
             line_label_name = mapping.get("critical_line", "Critical Line")
+            line_2_label_name = mapping.get("critical_line_2", line_label_name)
 
             def get_curve_data(sc_dict, default_drop=0.85, is_rise=False):
                 t_arr = sc_dict.get("time_sec")
@@ -1279,19 +1282,17 @@ class DashboardPage(QScrollArea):
                     ax.tick_params(colors=txt_col, labelsize=7)
 
                 if code_sel == "OVERLAY" or not code_sel:
-                    # OVERLAY VIEW FOR ALL 4 PRIMARY CONTINGENCY TYPES
+                    # OVERLAY VIEW FOR ALL PRIMARY CONTINGENCY TYPES
                     smr_trip_sc = next((sc for sc in dyn_scenarios if sc.get("event_type") == "SMR Trip"), {})
                     gen_trip_sc = next((sc for sc in dyn_scenarios if sc.get("event_type") == "Gen Trip"), {})
                     load_trip_sc = next((sc for sc in dyn_scenarios if sc.get("event_type") == "Load Trip"), {})
                     line_trip_sc = next((sc for sc in dyn_scenarios if sc.get("event_type") == "Line Trip"), {})
+                    n2_line_sc = next((sc for sc in dyn_scenarios if sc.get("event_type") == "N-2 Line Trip"), None)
 
                     t_smr, f_smr, v_kv_smr, v_pu_smr, nf_smr, nkv_smr, p_smr, q_smr, live_smr = get_curve_data(smr_trip_sc, 0.85)
                     t_gen, f_gen, v_kv_gen, v_pu_gen, nf_gen, nkv_gen, p_gen, q_gen, live_gen = get_curve_data(gen_trip_sc, 0.65)
                     t_load, f_load, v_kv_load, v_pu_load, nf_load, nkv_load, p_load, q_load, live_load = get_curve_data(load_trip_sc, 0.55, is_rise=True)
                     t_line, f_line, v_kv_line, v_pu_line, nf_line, nkv_line, p_line, q_line, live_line = get_curve_data(line_trip_sc, 0.40)
-
-                    has_any_live = any([live_smr, live_gen, live_load, live_line])
-                    mode_sub = " [PowerFactory Live]" if has_any_live else ""
 
                     bus_smr = smr_trip_sc.get("monitored_bus_name") or smr_trip_sc.get("target_bus") or "PCC Bus"
                     bus_gen = gen_trip_sc.get("monitored_bus_name") or gen_trip_sc.get("target_bus") or "PCC Bus"
@@ -1301,7 +1302,7 @@ class DashboardPage(QScrollArea):
                     lbl_smr_leg = f"1. SMR Trip ({smr_label_name} @ {bus_smr}, {nkv_smr:.0f} kV)"
                     lbl_gen_leg = f"2. Non-SMR Gen Trip ({gen_label_name} @ {bus_gen}, {nkv_gen:.0f} kV)"
                     lbl_load_leg = f"3. Load Trip ({load_label_name} @ {bus_load}, {nkv_load:.0f} kV)"
-                    lbl_line_leg = f"4. Line Trip ({line_label_name} @ {bus_line}, {nkv_line:.0f} kV)"
+                    lbl_line_leg = f"4. N-1 Line Trip ({line_label_name} @ {bus_line}, {nkv_line:.0f} kV)"
 
                     ref_nom_f = nf_smr if nf_smr > 0 else 50.0
                     ref_min_f = round(0.98 * ref_nom_f, 2)
@@ -1310,42 +1311,74 @@ class DashboardPage(QScrollArea):
                     ax_df.plot(t_gen, f_gen, color="#DD6B20", linewidth=1.6, linestyle="--", label=lbl_gen_leg)
                     ax_df.plot(t_load, f_load, color="#3182CE", linewidth=1.6, linestyle="-.", label=lbl_load_leg)
                     ax_df.plot(t_line, f_line, color="#805AD5", linewidth=1.6, linestyle=":", label=lbl_line_leg)
-                    ax_df.axhline(ref_nom_f, color="gray", linestyle="--", alpha=0.5, label=f"{ref_nom_f:.1f} Hz Nominal")
-                    ax_df.axhline(ref_min_f, color="red", linestyle=":", label=f"{ref_min_f:.2f} Hz Min Limit")
-                    ax_df.set_xlabel("Time (s)", color=txt_col, fontsize=7)
-                    ax_df.set_ylabel("Frequency (Hz)", color=txt_col, fontsize=7)
-                    ax_df.set_title("Frequency f(t) [Hz] — Overlay", color=txt_col, fontsize=8, fontweight="bold")
-                    ax_df.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=6)
 
                     ax_dv.plot(t_smr, v_kv_smr, color="#E53E3E", linewidth=1.8, label=lbl_smr_leg)
                     ax_dv.plot(t_gen, v_kv_gen, color="#DD6B20", linewidth=1.6, linestyle="--", label=lbl_gen_leg)
                     ax_dv.plot(t_load, v_kv_load, color="#3182CE", linewidth=1.6, linestyle="-.", label=lbl_load_leg)
                     ax_dv.plot(t_line, v_kv_line, color="#805AD5", linewidth=1.6, linestyle=":", label=lbl_line_leg)
-                    if len({round(nkv_smr, 1), round(nkv_gen, 1), round(nkv_load, 1), round(nkv_line, 1)}) == 1:
-                        ax_dv.axhline(nkv_smr, color="gray", linestyle="--", alpha=0.5, label=f"{nkv_smr:.1f} kV Nominal (1.0 p.u.)")
-                        ax_dv.axhline(0.90 * nkv_smr, color="orange", linestyle=":", label=f"{0.90*nkv_smr:.1f} kV Limit (0.90 p.u.)")
-                    ax_dv.set_xlabel("Time (s)", color=txt_col, fontsize=7)
-                    ax_dv.set_ylabel("Voltage (kV)", color=txt_col, fontsize=7)
-                    ax_dv.set_title("Voltage V(t) [kV] — Overlay", color=txt_col, fontsize=8, fontweight="bold")
-                    ax_dv.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=6)
 
                     ax_dp.plot(t_smr, p_smr, color="#E53E3E", linewidth=1.8, label=lbl_smr_leg)
                     ax_dp.plot(t_gen, p_gen, color="#DD6B20", linewidth=1.6, linestyle="--", label=lbl_gen_leg)
                     ax_dp.plot(t_load, p_load, color="#3182CE", linewidth=1.6, linestyle="-.", label=lbl_load_leg)
                     ax_dp.plot(t_line, p_line, color="#805AD5", linewidth=1.6, linestyle=":", label=lbl_line_leg)
-                    ax_dp.set_xlabel("Time (s)", color=txt_col, fontsize=7)
-                    ax_dp.set_ylabel("Active Power (MW)", color=txt_col, fontsize=7)
-                    ax_dp.set_title("Active Power P(t) [MW] — Overlay", color=txt_col, fontsize=8, fontweight="bold")
-                    ax_dp.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=6)
 
                     ax_dq.plot(t_smr, q_smr, color="#E53E3E", linewidth=1.8, label=lbl_smr_leg)
                     ax_dq.plot(t_gen, q_gen, color="#DD6B20", linewidth=1.6, linestyle="--", label=lbl_gen_leg)
                     ax_dq.plot(t_load, q_load, color="#3182CE", linewidth=1.6, linestyle="-.", label=lbl_load_leg)
                     ax_dq.plot(t_line, q_line, color="#805AD5", linewidth=1.6, linestyle=":", label=lbl_line_leg)
+
+                    nkv_set = {round(nkv_smr, 1), round(nkv_gen, 1), round(nkv_load, 1), round(nkv_line, 1)}
+
+                    if n2_line_sc is not None:
+                        t_n2, f_n2, v_kv_n2, v_pu_n2, nf_n2, nkv_n2, p_n2, q_n2, _ = get_curve_data(n2_line_sc, 0.52)
+                        bus_n2 = n2_line_sc.get("monitored_bus_name") or n2_line_sc.get("target_bus") or "Line Bus"
+                        # If Bus 2 is present and has a deeper voltage dip, use Bus 2 for the worst-case overlay curve
+                        if (
+                            n2_line_sc.get("monitored_bus_2_name")
+                            and len(n2_line_sc.get("voltage_2_kv", [])) == len(t_n2)
+                            and len(n2_line_sc.get("frequency_2_hz", [])) == len(t_n2)
+                        ):
+                            v2_pu_arr = np.array(n2_line_sc.get("voltage_2_pu", []), dtype=float)
+                            if len(v2_pu_arr) == len(t_n2) and float(np.min(v2_pu_arr)) < float(np.min(v_pu_n2)):
+                                bus_n2 = n2_line_sc["monitored_bus_2_name"]
+                                f_n2 = np.array(n2_line_sc["frequency_2_hz"], dtype=float)
+                                v_kv_n2 = np.array(n2_line_sc["voltage_2_kv"], dtype=float)
+                                nkv_n2 = float(n2_line_sc.get("nominal_voltage_2_kv", nkv_n2))
+                                p_n2 = np.array(n2_line_sc.get("active_power_2_mw", p_n2), dtype=float)
+                                q_n2 = np.array(n2_line_sc.get("reactive_power_2_mvar", q_n2), dtype=float)
+
+                        n2_elem_lbl = n2_line_sc.get("target_element") or f"{line_label_name} & {line_2_label_name}"
+                        lbl_n2_leg = f"5. N-2 Line Trip ({n2_elem_lbl} @ {bus_n2}, {nkv_n2:.0f} kV)"
+                        nkv_set.add(round(nkv_n2, 1))
+                        ax_df.plot(t_n2, f_n2, color="#10B981", linewidth=1.8, linestyle="-", label=lbl_n2_leg)
+                        ax_dv.plot(t_n2, v_kv_n2, color="#10B981", linewidth=1.8, linestyle="-", label=lbl_n2_leg)
+                        ax_dp.plot(t_n2, p_n2, color="#10B981", linewidth=1.8, linestyle="-", label=lbl_n2_leg)
+                        ax_dq.plot(t_n2, q_n2, color="#10B981", linewidth=1.8, linestyle="-", label=lbl_n2_leg)
+
+                    ax_df.axhline(ref_nom_f, color="gray", linestyle="--", alpha=0.5, label=f"{ref_nom_f:.1f} Hz Nominal")
+                    ax_df.axhline(ref_min_f, color="red", linestyle=":", label=f"{ref_min_f:.2f} Hz Min Limit")
+                    ax_df.set_xlabel("Time (s)", color=txt_col, fontsize=7)
+                    ax_df.set_ylabel("Frequency (Hz)", color=txt_col, fontsize=7)
+                    ax_df.set_title("Frequency f(t) [Hz] — Overlay", color=txt_col, fontsize=8, fontweight="bold")
+                    ax_df.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=5.8)
+
+                    if len(nkv_set) == 1:
+                        ax_dv.axhline(nkv_smr, color="gray", linestyle="--", alpha=0.5, label=f"{nkv_smr:.1f} kV Nominal (1.0 p.u.)")
+                        ax_dv.axhline(0.90 * nkv_smr, color="orange", linestyle=":", label=f"{0.90*nkv_smr:.1f} kV Limit (0.90 p.u.)")
+                    ax_dv.set_xlabel("Time (s)", color=txt_col, fontsize=7)
+                    ax_dv.set_ylabel("Voltage (kV)", color=txt_col, fontsize=7)
+                    ax_dv.set_title("Voltage V(t) [kV] — Overlay", color=txt_col, fontsize=8, fontweight="bold")
+                    ax_dv.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=5.8)
+
+                    ax_dp.set_xlabel("Time (s)", color=txt_col, fontsize=7)
+                    ax_dp.set_ylabel("Active Power (MW)", color=txt_col, fontsize=7)
+                    ax_dp.set_title("Active Power P(t) [MW] — Overlay", color=txt_col, fontsize=8, fontweight="bold")
+                    ax_dp.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=5.8)
+
                     ax_dq.set_xlabel("Time (s)", color=txt_col, fontsize=7)
                     ax_dq.set_ylabel("Reactive Power (MVAR)", color=txt_col, fontsize=7)
                     ax_dq.set_title("Reactive Power Q(t) [MVAR] — Overlay", color=txt_col, fontsize=8, fontweight="bold")
-                    ax_dq.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=6)
+                    ax_dq.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=5.8)
 
                 else:
                     # INDIVIDUAL SCENARIO DETAILED TRANSIENT VIEW
@@ -1357,11 +1390,8 @@ class DashboardPage(QScrollArea):
                     status = sc_target.get("status", "COMPLIANT")
                     nadir = float(sc_target.get("freq_nadir_hz", 49.15))
 
-                    smr_str = "With SMR" if with_smr else "Without SMR"
-                    load_str = "Peak Load (100%)" if load_factor == 1.0 else f"Low Load ({int(load_factor*100)}%)"
-
                     is_load_trip = "load" in event_type.lower()
-                    def_drop = 0.85 if "smr" in event_type.lower() else (0.65 if "gen" in event_type.lower() else (0.55 if is_load_trip else 0.40))
+                    def_drop = 0.85 if "smr" in event_type.lower() else (0.65 if "gen" in event_type.lower() else (0.55 if is_load_trip else (0.52 if "n-2" in event_type.lower() else 0.40)))
                     t, f_curve, v_kv_curve, v_pu_curve, nom_f, nom_kv, p_curve, q_curve, is_live = get_curve_data(sc_target, default_drop=def_drop, is_rise=is_load_trip)
 
                     if event_type == "SMR Trip":
@@ -1370,6 +1400,8 @@ class DashboardPage(QScrollArea):
                         curve_col = "#DD6B20"
                     elif event_type == "Load Trip":
                         curve_col = "#3182CE"
+                    elif event_type == "N-2 Line Trip":
+                        curve_col = "#10B981"
                     else:
                         curve_col = "#805AD5"
 
@@ -1381,6 +1413,16 @@ class DashboardPage(QScrollArea):
                     target_elem_label = sc_target.get("target_element") or event_type
                     pq_elem_label = sc_target.get("pq_measured_element") or target_elem_label
 
+                    # Check if this N-2 scenario monitored a second separate bus (Idea 1 Dual-Curve View)
+                    bus_2_name = sc_target.get("monitored_bus_2_name")
+                    has_bus_2 = (
+                        bool(bus_2_name)
+                        and bus_2_name != bus_name
+                        and len(sc_target.get("frequency_2_hz", [])) == len(t)
+                        and len(sc_target.get("voltage_2_kv", [])) == len(t)
+                    )
+                    curve_2_col = "#0EA5E9" if self.is_dark else "#0284C7"
+
                     # 1. Frequency f(t) in Hz
                     nadir_idx = int(np.argmax(f_curve)) if is_load_trip else int(np.argmin(f_curve))
                     actual_nadir = float(f_curve[nadir_idx]) if len(f_curve) > 0 else nadir
@@ -1388,13 +1430,21 @@ class DashboardPage(QScrollArea):
                     min_f_limit = round(0.98 * nom_f, 2)
 
                     ax_df.plot(t, f_curve, color=curve_col, linewidth=2.0, label=f"f(t) at {bus_name}")
+                    if has_bus_2:
+                        f2_curve = np.array(sc_target["frequency_2_hz"], dtype=float)
+                        ax_df.plot(t, f2_curve, color=curve_2_col, linewidth=1.8, linestyle="--", label=f"f(t) at {bus_2_name}")
+                        nadir2_idx = int(np.argmin(f2_curve))
+                        if float(f2_curve[nadir2_idx]) < actual_nadir:
+                            actual_nadir = float(f2_curve[nadir2_idx])
+                            t_nadir = float(t[nadir2_idx])
                     ax_df.axhline(nom_f, color="gray", linestyle="--", alpha=0.6, label=f"{nom_f:.1f} Hz Nominal")
                     ax_df.axhline(min_f_limit, color="red", linestyle=":", label=f"{min_f_limit:.2f} Hz Limit (-2%)")
                     ax_df.plot([t_nadir], [actual_nadir], 'ro', markersize=6, label=f"Nadir/Peak: {actual_nadir:.2f} Hz")
                     ax_df.set_xlabel("Time (s)", color=txt_col, fontsize=7)
                     ax_df.set_ylabel("Frequency (Hz)", color=txt_col, fontsize=7)
-                    ax_df.set_title(f"[{sc_code}] Frequency f(t) — {bus_name}", color=txt_col, fontsize=8, fontweight="bold")
-                    ax_df.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=6.5)
+                    title_bus_str = f"{bus_name} & {bus_2_name}" if has_bus_2 else bus_name
+                    ax_df.set_title(f"[{sc_code}] Frequency f(t) — {title_bus_str}", color=txt_col, fontsize=8, fontweight="bold")
+                    ax_df.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=6.2)
 
                     # 2. Voltage V(t) in kV
                     v_min_idx = int(np.argmin(v_kv_curve)) if len(v_kv_curve) > 0 else 0
@@ -1402,28 +1452,55 @@ class DashboardPage(QScrollArea):
                     v_min_pu = float(v_pu_curve[v_min_idx]) if len(v_pu_curve) > 0 else 1.0
                     t_vmin = float(t[v_min_idx]) if len(t) > v_min_idx else 1.0
 
-                    ax_dv.plot(t, v_kv_curve, color=curve_col, linewidth=2.0, label=f"V(t) at {bus_name}")
+                    ax_dv.plot(t, v_kv_curve, color=curve_col, linewidth=2.0, label=f"V(t) at {bus_name} ({nom_kv:.0f} kV)")
+                    if has_bus_2:
+                        v2_kv_curve = np.array(sc_target["voltage_2_kv"], dtype=float)
+                        v2_pu_curve = np.array(sc_target.get("voltage_2_pu", []), dtype=float)
+                        nom_kv_2 = float(sc_target.get("nominal_voltage_2_kv", nom_kv))
+                        ax_dv.plot(t, v2_kv_curve, color=curve_2_col, linewidth=1.8, linestyle="--", label=f"V(t) at {bus_2_name} ({nom_kv_2:.0f} kV)")
+                        v2_min_idx = int(np.argmin(v2_kv_curve))
+                        v2_min_pu = float(v2_pu_curve[v2_min_idx]) if len(v2_pu_curve) > v2_min_idx else (float(v2_kv_curve[v2_min_idx]) / max(1.0, nom_kv_2))
+                        if v2_min_pu < v_min_pu:
+                            v_min_kv = float(v2_kv_curve[v2_min_idx])
+                            v_min_pu = v2_min_pu
+                            t_vmin = float(t[v2_min_idx])
                     ax_dv.axhline(nom_kv, color="gray", linestyle="--", alpha=0.6, label=f"{nom_kv:.1f} kV Nominal")
                     ax_dv.axhline(0.90 * nom_kv, color="orange", linestyle=":", label=f"{0.90*nom_kv:.1f} kV Limit (0.90 p.u.)")
                     ax_dv.plot([t_vmin], [v_min_kv], 'o', color="#F59E0B", markersize=5, label=f"V_min: {v_min_kv:.2f} kV ({v_min_pu:.3f} p.u.)")
                     ax_dv.set_xlabel("Time (s)", color=txt_col, fontsize=7)
                     ax_dv.set_ylabel("Voltage (kV)", color=txt_col, fontsize=7)
-                    ax_dv.set_title(f"[{sc_code}] Voltage V(t) — {bus_name} ({nom_kv:.0f} kV)", color=txt_col, fontsize=8, fontweight="bold")
-                    ax_dv.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=6.5)
+                    ax_dv.set_title(f"[{sc_code}] Voltage V(t) — {title_bus_str}", color=txt_col, fontsize=8, fontweight="bold")
+                    ax_dv.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=6.2)
 
-                    # 3. Active Power P(t) at Monitored Bus
-                    ax_dp.plot(t, p_curve, color=curve_col, linewidth=2.0, label=f"P(t): {pq_elem_label} ({p_base:.1f} MW)")
+                    # 3. Active Power P(t) at Monitored Bus(es)
+                    ax_dp.plot(t, p_curve, color=curve_col, linewidth=2.0, label=f"P(t) @ {bus_name}: {pq_elem_label} ({p_base:.1f} MW)")
+                    if has_bus_2 and len(sc_target.get("active_power_2_mw", [])) == len(t):
+                        p2_curve = np.array(sc_target["active_power_2_mw"], dtype=float)
+                        p2_base = float(p2_curve[0]) if len(p2_curve) > 0 else 0.0
+                        pq2_lbl = sc_target.get("pq_measured_element_2") or bus_2_name
+                        ax_dp.plot(t, p2_curve, color=curve_2_col, linewidth=1.8, linestyle="--", label=f"P(t) @ {bus_2_name}: {pq2_lbl} ({p2_base:.1f} MW)")
                     ax_dp.set_xlabel("Time (s)", color=txt_col, fontsize=7)
                     ax_dp.set_ylabel("Active Power (MW)", color=txt_col, fontsize=7)
-                    ax_dp.set_title(f"[{sc_code}] Active Power P(t) — {bus_name} ({pq_elem_label})", color=txt_col, fontsize=8, fontweight="bold")
-                    ax_dp.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=6.5)
+                    ax_dp.set_title(
+                        f"[{sc_code}] Active Power P(t) — {title_bus_str}" if has_bus_2 else f"[{sc_code}] Active Power P(t) — {bus_name} ({pq_elem_label})",
+                        color=txt_col, fontsize=8, fontweight="bold"
+                    )
+                    ax_dp.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=6.2)
 
-                    # 4. Reactive Power Q(t) at Monitored Bus
-                    ax_dq.plot(t, q_curve, color=curve_col, linewidth=2.0, label=f"Q(t): {pq_elem_label} ({q_base:.1f} MVAR)")
+                    # 4. Reactive Power Q(t) at Monitored Bus(es)
+                    ax_dq.plot(t, q_curve, color=curve_col, linewidth=2.0, label=f"Q(t) @ {bus_name}: {pq_elem_label} ({q_base:.1f} MVAR)")
+                    if has_bus_2 and len(sc_target.get("reactive_power_2_mvar", [])) == len(t):
+                        q2_curve = np.array(sc_target["reactive_power_2_mvar"], dtype=float)
+                        q2_base = float(q2_curve[0]) if len(q2_curve) > 0 else 0.0
+                        pq2_lbl = sc_target.get("pq_measured_element_2") or bus_2_name
+                        ax_dq.plot(t, q2_curve, color=curve_2_col, linewidth=1.8, linestyle="--", label=f"Q(t) @ {bus_2_name}: {pq2_lbl} ({q2_base:.1f} MVAR)")
                     ax_dq.set_xlabel("Time (s)", color=txt_col, fontsize=7)
                     ax_dq.set_ylabel("Reactive Power (MVAR)", color=txt_col, fontsize=7)
-                    ax_dq.set_title(f"[{sc_code}] Reactive Power Q(t) — {bus_name} ({pq_elem_label})", color=txt_col, fontsize=8, fontweight="bold")
-                    ax_dq.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=6.5)
+                    ax_dq.set_title(
+                        f"[{sc_code}] Reactive Power Q(t) — {title_bus_str}" if has_bus_2 else f"[{sc_code}] Reactive Power Q(t) — {bus_name} ({pq_elem_label})",
+                        color=txt_col, fontsize=8, fontweight="bold"
+                    )
+                    ax_dq.legend(facecolor=card_bg, edgecolor="none", labelcolor=txt_col, fontsize=6.2)
 
                 fig_dyn.tight_layout()
                 canvas_dyn.draw()

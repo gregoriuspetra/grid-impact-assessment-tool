@@ -208,13 +208,25 @@ class ImportPage(QScrollArea):
             return
 
         if self.connector.load_custom_pfd(path):
-            QMessageBox.information(self, "Import Successful", f"✅ Successfully imported and activated:\n{path}")
+            self.refresh_installed_projects()
             self.update_summary_display()
             self.notify_main_window_of_project_change()
+            QMessageBox.information(
+                self,
+                "Import & Activation Successful",
+                f"✅ Successfully imported and activated PowerFactory project:\n"
+                f"• Active Project: {self.connector.active_project_name}\n"
+                f"• Source File: {path}"
+            )
         else:
-            QMessageBox.information(self, "PFD Loaded", f"ℹ️ Registered custom model path:\n{path}\nProceed to Step 2 to configure scenarios.")
             self.update_summary_display()
             self.notify_main_window_of_project_change()
+            QMessageBox.warning(
+                self,
+                "PFD Import Notice",
+                f"⚠️ Could not automatically import/activate .pfd via PowerFactory API:\n{path}\n\n"
+                f"Tip: Ensure PowerFactory is connected, or import the .pfd once inside PowerFactory (File -> Import -> Data) and select it from '2. Select Installed PowerFactory Project Database'."
+            )
 
     def update_summary_display(self):
         summary = self.connector.get_summary()

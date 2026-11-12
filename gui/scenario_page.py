@@ -140,6 +140,15 @@ class ScenarioPage(QScrollArea):
         map_layout.addWidget(self.combo_crit_line)
         map_layout.addWidget(self.lbl_line_msg)
 
+        # 5b. Second Critical Transmission Line Dropdown (for N-2 Line Trip)
+        self.lbl_crit_line_2 = QLabel("5b. Second Critical Transmission Line (Manual Selection for N-2 Line Trip):")
+        self.combo_crit_line_2 = QComboBox()
+        self.combo_crit_line_2.setFont(QFont("Segoe UI", 10))
+        self.combo_crit_line_2.setMinimumHeight(36)
+
+        map_layout.addWidget(self.lbl_crit_line_2)
+        map_layout.addWidget(self.combo_crit_line_2)
+
         layout.addWidget(self.card_mapper)
 
         # 2. Hybrid Load & Dynamic Simulation Settings Card
@@ -209,7 +218,7 @@ class ScenarioPage(QScrollArea):
         run_layout = QVBoxLayout(self.card_run)
         run_layout.setSpacing(12)
 
-        self.btn_run_22 = QPushButton("🚀 Execute All 22 Impact Assessment Scenarios")
+        self.btn_run_22 = QPushButton("🚀 Execute All 26 Impact Assessment Scenarios")
         self.btn_run_22.setFont(QFont("Segoe UI", 11, QFont.Bold))
         self.btn_run_22.setMinimumHeight(46)
         self.btn_run_22.clicked.connect(self.run_22_scenarios)
@@ -219,7 +228,7 @@ class ScenarioPage(QScrollArea):
         self.progress_bar.setValue(0)
         self.progress_bar.setTextVisible(True)
 
-        self.lbl_status_log = QLabel("Status: Ready to execute 22 scenarios.")
+        self.lbl_status_log = QLabel("Status: Ready to execute 26 scenarios.")
         self.lbl_status_log.setFont(QFont("Segoe UI", 9))
 
         run_layout.addWidget(self.btn_run_22)
@@ -261,6 +270,7 @@ class ScenarioPage(QScrollArea):
         self.combo_non_smr.clear()
         self.combo_big_load.clear()
         self.combo_crit_line.clear()
+        self.combo_crit_line_2.clear()
 
         self.combo_peak_scen.blockSignals(True)
         self.combo_low_scen.blockSignals(True)
@@ -294,10 +304,17 @@ class ScenarioPage(QScrollArea):
 
         if lines:
             self.combo_crit_line.addItems(lines)
+            self.combo_crit_line_2.addItems(lines)
             if auto_targets["critical_line"] in lines:
                 self.combo_crit_line.setCurrentText(auto_targets["critical_line"])
+            # Default second critical line to another distinct line if available
+            first_line = self.combo_crit_line.currentText()
+            second_line = next((l for l in lines if l != first_line), first_line)
+            if second_line in lines:
+                self.combo_crit_line_2.setCurrentText(second_line)
         else:
             self.combo_crit_line.addItem(auto_targets["critical_line"])
+            self.combo_crit_line_2.addItem(auto_targets["critical_line"])
 
         fallback_opt = "[None / Use % Load Scaling Fallback]"
         scen_items = list(scenarios) if scenarios else []
@@ -364,7 +381,7 @@ class ScenarioPage(QScrollArea):
                 self, 
                 "PowerFactory Connection Notice", 
                 "DIgSILENT PowerFactory live API is not currently connected.\n\n"
-                "Would you like to execute the 22-Scenario Assessment in Grid Simulation Mode?",
+                "Would you like to execute the 26-Scenario Assessment in Grid Simulation Mode?",
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.Yes
             )
@@ -381,6 +398,7 @@ class ScenarioPage(QScrollArea):
             "largest_non_smr_gen": self.combo_non_smr.currentText(),
             "biggest_load": self.combo_big_load.currentText(),
             "critical_line": self.combo_crit_line.currentText(),
+            "critical_line_2": self.combo_crit_line_2.currentText(),
             "peak_scenario": peak_scen_sel,
             "low_scenario": low_scen_sel
         }
@@ -408,7 +426,7 @@ class ScenarioPage(QScrollArea):
         QMessageBox.information(
             self, 
             "Batch Assessment Complete", 
-            f"✅ All 22 Assessment Scenarios Executed Successfully!\n\n"
+            f"✅ All {results['total_count']} Assessment Scenarios Executed Successfully!\n\n"
             f"• Project: {results['project_name']}\n"
             f"• Fault PCC Bus: {mapping['pcc_bus']}\n"
             f"• Dynamic RMS Stop Time: {sim_stop_time_sec:.1f} s\n"
@@ -426,12 +444,13 @@ class ScenarioPage(QScrollArea):
         titles = [self.title_mapper, self.title_load]
         sublabels = [
             self.lbl_smr, self.lbl_pcc, self.lbl_non_smr, self.lbl_big_load,
-            self.lbl_crit_line, self.lbl_scen_title, self.lbl_peak_scen, self.lbl_low_scen,
+            self.lbl_crit_line, self.lbl_crit_line_2, self.lbl_scen_title,
+            self.lbl_peak_scen, self.lbl_low_scen,
             self.lbl_low_ratio, self.lbl_sim_stop_time
         ]
         combos = [
             self.combo_smr, self.combo_pcc_bus, self.combo_non_smr, self.combo_big_load,
-            self.combo_crit_line, self.combo_peak_scen, self.combo_low_scen
+            self.combo_crit_line, self.combo_crit_line_2, self.combo_peak_scen, self.combo_low_scen
         ]
 
         if self.is_dark:

@@ -133,33 +133,117 @@ class PowerFactoryConnector:
         if not self.is_connected or not self.app:
             return False
         try:
-            proj_name = os.path.splitext(os.path.basename(pfd_filepath))[0]
-            logger.info(f"Loading custom PFD project: {proj_name} ({pfd_filepath})")
+            norm_path = os.path.normpath(os.path.abspath(pfd_filepath))
+            proj_name_from_file = os.path.splitext(os.path.basename(norm_path))[0]
+            logger.info(f"Importing custom PFD archive into PowerFactory: {norm_path}")
 
-            if self.activate_project_by_name(proj_name):
-                return True
-
-            try:
-                self.app.ExecuteCmd(f'import "{pfd_filepath}"')
-            except Exception:
-                pass
+            # 1. Deactivate any currently active project so PowerFactory allows database import
+            current_active = self.app.GetActiveProject()
+            prev_active_name = current_active.GetAttribute("loc_name") if current_active else None
+            if current_active:
+                try:
+                    current_active.Deactivate()
+                except Exception:
+                    pass
 
             user = self.app.GetCurrentUser()
-            if user:
-                try:
-                    com_import = user.CreateObject("ComImport", "Import PFD")
-                    if com_import:
-                        for attr in ["f_name", "filename", "g_file"]:
-                            try:
-                                com_import.SetAttribute(attr, pfd_filepath)
-                                break
-                            except Exception:
-                                pass
-                        com_import.Execute()
-                except Exception as ex:
-                    logger.debug(f"ComImport execution note: {ex}")
+            if not user:
+                logger.error("Could not retrieve current PowerFactory user folder (GetCurrentUser() returned None).")
+                return False
 
-            return self.activate_project_by_name(proj_name)
+            # Snapshot existing projects in the user folder before import (by full database path, NOT Python id())
+            before_projects = user.GetContents("*.IntPrj") or []
+            before_fullnames = {p.GetFullName() for p in before_projects if hasattr(p, "GetFullName")}
+
+            # 2. Execute native PowerFactory ComPfdimport (.pfd archive import command)
+            pfd_import = None
+            err_imp = -1
+            imported_objs = []
+            try:
+                pfd_import = user.CreateObject("ComPfdimport", "Import_PFD_Archive")
+                if pfd_import:
+                    # Set target folder (g_target = user)
+                    try:
+                        pfd_import.SetAttribute("g_target", user)
+                    except Exception:
+                        pfd_import.g_target = user
+
+                    # Set .pfd archive file path (g_file)
+                    try:
+                        pfd_import.SetAttribute("g_file", norm_path)
+                    except Exception:
+                        pfd_import.g_file = norm_path
+
+                    # Enable PowerFactory's built-in "Activate imported project" option (activatePrj = 1)
+                    try:
+                        pfd_import.SetAttribute("activatePrj", 1)
+                    except Exception:
+                        try:
+                            pfd_import.activatePrj = 1
+                        except Exception:
+                            pass
+
+                    err_imp = pfd_import.Execute()
+                    logger.info(f"ComPfdimport.Execute() finished with status code: {err_imp}")
+
+                    if hasattr(pfd_import, "GetImportedObjects"):
+                        try:
+                            imported_objs = pfd_import.GetImportedObjects() or []
+                        except Exception:
+                            imported_objs = []
+                else:
+                    logger.error("Failed to create ComPfdimport object in PowerFactory user folder.")
+            except Exception as ex:
+                logger.warning(f"ComPfdimport execution warning: {ex}")
+            finally:
+                if pfd_import:
+                    try:
+                        pfd_import.Delete()
+                    except Exception:
+                        pass
+
+            # 3. Check if PowerFactory automatically activated the imported .pfd project (via activatePrj = 1)
+            active_after = self.app.GetActiveProject()
+            if active_after:
+                self.active_project_name = active_after.GetAttribute("loc_name") or proj_name_from_file
+                self._activate_study_case()
+                logger.info(f"PowerFactory auto-activated imported PFD project: '{self.active_project_name}'")
+                return True
+
+            # 4. Next, check objects returned directly by ComPfdimport.GetImportedObjects()
+            newly_imported_proj = None
+            for obj in imported_objs:
+                try:
+                    if obj.GetClassName() == "IntPrj":
+                        newly_imported_proj = obj
+                        break
+                except Exception:
+                    pass
+
+            # 5. Fallback: Check for any newly created IntPrj in user folder by full database path (GetFullName)
+            if not newly_imported_proj and err_imp == 0:
+                after_projects = user.GetContents("*.IntPrj") or []
+                for p in after_projects:
+                    if hasattr(p, "GetFullName") and p.GetFullName() not in before_fullnames:
+                        newly_imported_proj = p
+                        break
+
+            # Activate the newly imported project directly
+            if newly_imported_proj:
+                actual_proj_name = newly_imported_proj.GetAttribute("loc_name") or proj_name_from_file
+                err_act = newly_imported_proj.Activate()
+                if err_act == 0:
+                    self.active_project_name = actual_proj_name
+                    self._activate_study_case()
+                    logger.info(f"Successfully activated imported PFD project: '{actual_proj_name}'")
+                    return True
+                elif self.activate_project_by_name(actual_proj_name):
+                    return True
+
+            logger.error(f"PFD import failed (ComPfdimport status={err_imp}) for file: {norm_path}")
+            # Restore previously active project if import failed so PowerFactory isn't left with no project active
+            if prev_active_name:
+                self.activate_project_by_name(prev_active_name)
         except Exception as e:
             logger.error(f"Error loading custom .pfd: {e}")
         return False
